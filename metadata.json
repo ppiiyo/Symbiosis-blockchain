@@ -1,0 +1,6 @@
+{
+  "name": "Symbiosis Network Consensus Simulator",
+  "description": "An interactive mathematical simulator of the high-speed, game-theoretically secure Symbiosis Network (SYM) consensus protocol with real-time attester-checker game simulation and metrics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
