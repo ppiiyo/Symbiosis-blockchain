@@ -31,7 +31,7 @@ export const ManifestHub: React.FC<ManifestHubProps> = ({ config, stats }) => {
   const [subTab, setSubTab] = useState<'tokenomics' | 'roadmap' | 'innovations'>('tokenomics');
   const [activePhase, setActivePhase] = useState<number>(0);
   const [selectedAllocation, setSelectedAllocation] = useState<string>('genesis');
-  const [interactiveSupply, setInteractiveSupply] = useState<number>(50000000); // 50M base
+  const [interactiveSupply, setInteractiveSupply] = useState<number>(1000000000); // 1B base
 
   // Allocations definitions
   const allocations = [
@@ -204,7 +204,7 @@ export const ManifestHub: React.FC<ManifestHubProps> = ({ config, stats }) => {
               </div>
               <div className="text-[11px] text-zinc-400 mt-2 flex justify-between border-t border-zinc-900 pt-2">
                 <span>Базовый резерв:</span>
-                <span className="text-zinc-500">50,000,000 SYM</span>
+                <span className="text-zinc-500">1,000,000,000 SYM</span>
               </div>
             </div>
 
@@ -344,7 +344,7 @@ export const ManifestHub: React.FC<ManifestHubProps> = ({ config, stats }) => {
                           <h4 className="text-zinc-100 font-bold text-sm">{alloc.name} ({alloc.percent}%)</h4>
                         </div>
                         <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded border border-zinc-800 bg-zinc-950 ${alloc.textColor}`}>
-                          {(50000000 * alloc.percent / 100).toLocaleString()} SYM
+                          {(1000000000 * alloc.percent / 100).toLocaleString()} SYM
                         </span>
                       </div>
 
