@@ -12,16 +12,13 @@ import {
   processSimulationTick, 
   calculateExpectedUtilities 
 } from './simulationEngine';
-import { ComparisonMatrix } from './components/ComparisonMatrix';
-import { TransactionSandbox } from './components/TransactionSandbox';
 import { NetworkGrid } from './components/NetworkGrid';
 import { ChainFlow } from './components/ChainFlow';
 import { GameTheoryPanel } from './components/GameTheoryPanel';
 import { ControlPanel } from './components/ControlPanel';
 import { MetricsDashboard } from './components/MetricsDashboard';
-import { ScalingMiningHub } from './components/ScalingMiningHub';
-import { ManifestHub } from './components/ManifestHub';
 import { GovernanceDaoHub } from './components/GovernanceDaoHub';
+import { SepoliaDAppHub } from './components/SepoliaDAppHub';
 import { 
   Shield, 
   ShieldAlert, 
@@ -36,7 +33,8 @@ import {
   Info,
   Activity,
   Database,
-  Vote
+  Vote,
+  Globe
 } from 'lucide-react';
 
 export default function App() {
@@ -73,7 +71,7 @@ export default function App() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [activeAttack, setActiveAttack] = useState<'none' | 'double_spend' | 'lazy_takeover' | 'sybil'>('none');
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'network' | 'comparison' | 'txs_sandbox' | 'validators' | 'explainer' | 'scaling_mining' | 'governance_dao'>('network');
+  const [activeTab, setActiveTab] = useState<'network' | 'sepolia' | 'governance_dao'>('network');
 
   const [userBalance, setUserBalance] = useState<number>(12500); // Starting capital for investor simulation
   const [userStakedNodes, setUserStakedNodes] = useState<{ [nodeId: string]: number }>({});
@@ -461,6 +459,17 @@ export default function App() {
   // Delegator actions for the Investor Hub integration
   const handleDelegateStake = (nodeId: string, amount: number) => {
     if (amount <= 0 || amount > userBalance) return;
+
+    if (nodeId === 'pool-ssym') {
+      setUserBalance(prev => prev - amount);
+      setUserStakedNodes(prev => ({
+        ...prev,
+        [nodeId]: (prev[nodeId] || 0) + amount
+      }));
+      addLog(`💸 Вы успешно внесли ${amount} SYM в пул sSYM. Контракт ликвидного стейкинга выпустил вам sSYM.`);
+      return;
+    }
+
     const nodeObj = nodes.find(n => n.id === nodeId);
     if (!nodeObj || nodeObj.isSlashed) return;
 
@@ -489,23 +498,49 @@ export default function App() {
     addLog(`✨ Награда разблокирована: +${reward.toFixed(4)} SYM зачислено на ваш баланс!`);
   };
 
-  const handleUnstakeAll = () => {
-    const totalStakedSum = Object.values(userStakedNodes).reduce((a, b) => (a as number) + (b as number), 0) as number;
-    if (totalStakedSum <= 0) return;
+  const handleUnstake = (amount?: number, nodeId: string = 'pool-ssym') => {
+    if (amount !== undefined) {
+      const currentStaked = userStakedNodes[nodeId] || 0;
+      if (currentStaked <= 0 || amount <= 0 || amount > currentStaked) return;
 
-    setUserBalance(prev => prev + totalStakedSum);
-    
-    // Reverse validators stake
-    setNodes(prev => prev.map(n => {
-      const delegated = (userStakedNodes[n.id] as number) || 0;
-      if (delegated > 0) {
-        return { ...n, stake: Math.max(100, n.stake - delegated) };
+      setUserBalance(prev => prev + amount);
+      setUserStakedNodes(prev => {
+        const next = { ...prev };
+        next[nodeId] = Math.max(0, currentStaked - amount);
+        if (next[nodeId] === 0) {
+          delete next[nodeId];
+        }
+        return next;
+      });
+
+      if (nodeId !== 'pool-ssym') {
+        setNodes(prev => prev.map(n => {
+          if (n.id === nodeId) {
+            return { ...n, stake: Math.max(100, n.stake - amount) };
+          }
+          return n;
+        }));
       }
-      return n;
-    }));
 
-    setUserStakedNodes({});
-    addLog(`📥 Залоги отозваны: Полный возврат ${totalStakedSum} SYM на свободный адрес произведен.`);
+      addLog(`🔓 Успешный вывод средств: ${amount} SYM возвращено на ваш баланс из ${nodeId === 'pool-ssym' ? 'пула sSYM' : 'стейка валидатора'}.`);
+    } else {
+      const totalStakedSum = Object.values(userStakedNodes).reduce((a, b) => (a as number) + (b as number), 0) as number;
+      if (totalStakedSum <= 0) return;
+
+      setUserBalance(prev => prev + totalStakedSum);
+      
+      // Reverse validators stake
+      setNodes(prev => prev.map(n => {
+        const delegated = (userStakedNodes[n.id] as number) || 0;
+        if (delegated > 0) {
+          return { ...n, stake: Math.max(100, n.stake - delegated) };
+        }
+        return n;
+      }));
+
+      setUserStakedNodes({});
+      addLog(`📥 Залоги отозваны: Полный возврат ${totalStakedSum} SYM на свободный адрес произведен.`);
+    }
   };
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
@@ -571,62 +606,18 @@ export default function App() {
                   : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950'
               }`}
             >
-              <Activity className="w-3.5 h-3.5" /> Карта Сети & Транки
+              <Activity className="w-3.5 h-3.5" /> 🛰️ Симуляция Консенсуса
             </button>
 
             <button
-              onClick={() => setActiveTab('comparison')}
+              onClick={() => setActiveTab('sepolia')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'comparison'
+                activeTab === 'sepolia'
                   ? 'bg-zinc-900 text-purple-400 border border-purple-900/30'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950'
+                  : 'text-zinc-400 hover:text-zinc-150 hover:bg-zinc-950'
               }`}
             >
-              <Zap className="w-3.5 h-3.5" /> Сравнение Консенсусов
-            </button>
-
-            <button
-              onClick={() => setActiveTab('validators')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'validators'
-                  ? 'bg-zinc-900 text-purple-400 border border-purple-900/30'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950'
-              }`}
-            >
-              <Database className="w-3.5 h-3.5" /> Реестр Аудита Валидаторов
-            </button>
-
-            <button
-              onClick={() => setActiveTab('txs_sandbox')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'txs_sandbox'
-                  ? 'bg-zinc-900 text-purple-400 border border-purple-900/30'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950'
-              }`}
-            >
-              <Terminal className="w-3.5 h-3.5" /> Смарт-контракты & Mempool
-            </button>
-
-            <button
-              onClick={() => setActiveTab('explainer')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'explainer'
-                  ? 'bg-zinc-900 text-purple-400 border border-purple-900/30'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950'
-              }`}
-            >
-              <Info className="w-3.5 h-3.5" /> Манифест SYM
-            </button>
-
-            <button
-              onClick={() => setActiveTab('scaling_mining')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'scaling_mining'
-                  ? 'bg-zinc-900 text-purple-400 border border-purple-900/30'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950'
-              }`}
-            >
-              <Coins className="w-3.5 h-3.5" /> Скейлинг & Делегирование
+              <Globe className="w-3.5 h-3.5 text-purple-400" /> ⛓️ Sepolia On-Chain Портал
             </button>
 
             <button
@@ -637,7 +628,7 @@ export default function App() {
                   : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950'
               }`}
             >
-              <Vote className="w-3.5 h-3.5 text-purple-400" /> Управление & DAO
+              <Vote className="w-3.5 h-3.5 text-purple-400" /> 🗳️ Управление & Аудит
               <span className="absolute -top-1 -right-1.5 flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
@@ -664,197 +655,24 @@ export default function App() {
               </div>
             )}
 
-            {activeTab === 'comparison' && (
-              <div className="w-full h-full overflow-y-auto custom-scrollbar">
-                <ComparisonMatrix />
-              </div>
-            )}
-
-            {activeTab === 'validators' && (
-              <div className="w-full bg-[#09090b] border border-zinc-900 rounded-xl p-5 space-y-4 overflow-y-auto max-h-full custom-scrollbar">
-                <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
-                  <div className="flex items-center gap-2">
-                    <Database className="w-4 h-4 text-purple-400" />
-                    <h3 className="text-zinc-100 font-bold font-sans text-sm">Таблица Аудита Активных Валидаторов SYM</h3>
-                  </div>
-                  <span className="text-[10px] font-mono text-zinc-500">
-                    Всего в пуле: {nodes.length}
-                  </span>
-                </div>
-
-                {/* Quick stats ribbon */}
-                <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                  <div className="bg-zinc-950 p-2 rounded border border-zinc-900">
-                    <span className="text-[9px] text-zinc-500 block font-sans">Честные</span>
-                    <span className="text-emerald-400 font-bold font-mono">{nodes.filter(n => n.type === 'honest' && !n.isSlashed).length}</span>
-                  </div>
-                  <div className="bg-zinc-950 p-2 rounded border border-zinc-900">
-                    <span className="text-[9px] text-zinc-500 block font-sans">Рациональные</span>
-                    <span className="text-amber-500 font-bold font-mono">{nodes.filter(n => n.type === 'lazy' && !n.isSlashed).length}</span>
-                  </div>
-                  <div className="bg-zinc-950 p-2 rounded border border-zinc-900">
-                    <span className="text-[9px] text-[zinc-500] block font-sans">Атакующие</span>
-                    <span className="text-indigo-400 font-bold font-mono">{nodes.filter(n => n.type === 'malicious' && !n.isSlashed).length}</span>
-                  </div>
-                  <div className="bg-zinc-950 p-2 rounded border border-zinc-950">
-                    <span className="text-[9px] text-zinc-500 block font-sans">Срезано (Slashed)</span>
-                    <span className="text-red-500 font-bold font-mono">{nodes.filter(n => n.isSlashed).length}</span>
-                  </div>
-                </div>
-
-                {/* Table row list */}
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-zinc-300 divide-y divide-zinc-900">
-                    <thead>
-                      <tr className="text-zinc-500 font-mono text-[10px] uppercase">
-                        <th className="py-2.5 px-2">Валидатор</th>
-                        <th className="py-2.5 px-2">Репутация (Fidelity)</th>
-                        <th className="py-2.5 px-2">Роль / Тип</th>
-                        <th className="py-2.5 px-2 text-right">Стейк</th>
-                        <th className="py-2.5 px-2 text-right">Награды / Баланс</th>
-                        <th className="py-2.5 px-2 text-center">Проверки / Лень</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-900/50">
-                      {(Array.from(new Map(nodes.map(n => [n.id, n])).values()) as ValidatorNode[]).map(node => (
-                        <tr 
-                          key={node.id} 
-                          onClick={() => setSelectedNodeId(node.id)}
-                          className={`hover:bg-zinc-900/30 transition-colors cursor-pointer ${
-                            selectedNodeId === node.id ? 'bg-zinc-900/50' : ''
-                          }`}
-                        >
-                          <td className="py-2.5 px-2 font-bold text-zinc-100 flex items-center gap-2">
-                            <div className={`w-1.5 h-1.5 rounded-full ${
-                              node.isSlashed 
-                                ? 'bg-red-500 animate-pulse' 
-                                : node.lastAction === 'verifying'
-                                ? 'bg-emerald-400 animate-ping'
-                                : 'bg-zinc-600'
-                            }`} />
-                            <span className="truncate max-w-[120px]">{node.name}</span>
-                          </td>
-                          <td className="py-2.5 px-2">
-                            <div className="flex items-center gap-1.5 font-mono">
-                              <div className="w-16 bg-zinc-900 h-1.5 rounded-full overflow-hidden border border-zinc-850">
-                                <div 
-                                  className={`h-full transition-all ${
-                                    node.reputationScore > 80 
-                                      ? 'bg-emerald-500' 
-                                      : node.reputationScore > 50 
-                                      ? 'bg-amber-500' 
-                                      : 'bg-red-500'
-                                  }`}
-                                  style={{ width: `${node.reputationScore}%` }}
-                                />
-                              </div>
-                              <span className={
-                                node.reputationScore > 80 
-                                  ? 'text-emerald-400 font-bold' 
-                                  : node.reputationScore > 50 
-                                  ? 'text-amber-500' 
-                                  : 'text-red-500'
-                              }>
-                                {node.reputationScore}%
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-2.5 px-2">
-                            <span className={`text-[9px] uppercase font-mono px-1.5 py-0.5 rounded border ${
-                              node.isSlashed
-                                ? 'border-red-950 bg-red-950/20 text-red-500'
-                                : node.type === 'honest'
-                                ? 'border-emerald-900 bg-emerald-950/10 text-emerald-400'
-                                : node.type === 'lazy'
-                                ? 'border-amber-900 bg-amber-950/10 text-amber-500'
-                                : 'border-indigo-900 bg-indigo-950/10 text-indigo-400'
-                            }`}>
-                              {node.type} {node.role}
-                            </span>
-                          </td>
-                          <td className="py-2.5 px-2 text-right font-mono font-bold text-zinc-100">
-                            {node.stake.toLocaleString()} SYM
-                          </td>
-                          <td className="py-2.5 px-2 text-right font-mono font-bold text-emerald-400">
-                            {node.balance.toFixed(0)} SYM
-                          </td>
-                          <td className="py-2.5 px-2 text-center font-mono text-zinc-400 text-[11px]">
-                            <span className="text-emerald-400">{node.blocksChecked}</span>
-                            <span className="text-zinc-600"> / </span>
-                            <span className="text-amber-500">{node.blocksLazySigned}</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'txs_sandbox' && (
-              <div className="w-full h-full overflow-y-auto custom-scrollbar">
-                <TransactionSandbox
-                  transactions={transactions}
-                  mempool={mempool}
+            {activeTab === 'sepolia' && (
+              <div className="w-full h-full overflow-y-auto custom-scrollbar pr-1">
+                <SepoliaDAppHub
                   nodes={nodes}
-                  onBroadcastTransaction={(newTx) => {
-                    const txId = `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-                    setMempool(prev => [...prev, {
-                      ...newTx,
-                      id: txId,
-                      status: 'mempool',
-                      timestamp: Date.now()
-                    }]);
-                    addLog(`🛰️ Транзакция ${txId} транслирована во входящие буферы! Ожидайте подписи следующего блока...`);
-                  }}
-                  onClearHistory={() => {
-                    setTransactions([]);
-                    setMempool([]);
-                    addLog('🧹 Очищены списки Ledger и Mempool в проводнике!');
-                  }}
-                />
-              </div>
-            )}
-
-            {activeTab === 'scaling_mining' && (
-              <div className="w-full h-full overflow-y-auto custom-scrollbar">
-                <ScalingMiningHub
-                  nodes={nodes}
+                  userBalance={userBalance}
+                  onChangeUserBalance={setUserBalance}
+                  userStakedNodes={userStakedNodes}
                   onDelegate={handleDelegateStake}
                   onClaimRewards={handleClaimRewards}
-                  onUnstake={handleUnstakeAll}
-                  userStakedNodes={userStakedNodes}
+                  onUnstake={handleUnstake}
                   userClaimableRewards={userClaimableRewards}
-                  userBalance={userBalance}
-                  statsHeight={stats.currentHeight}
-                  avgTPS={stats.realtimeTPS}
-                  forceZkProtection={forceZkProtection}
-                  setForceZkProtection={setForceZkProtection}
-                  config={config}
-                  gasBackEnabled={gasBackEnabled}
-                  setGasBackEnabled={setGasBackEnabled}
-                  rotatingCommitteesEnabled={rotatingCommitteesEnabled}
-                  setRotatingCommitteesEnabled={setRotatingCommitteesEnabled}
-                  pidTuningEnabled={pidTuningEnabled}
-                  setPidTuningEnabled={setPidTuningEnabled}
-                  sentinelAiEnabled={sentinelAiEnabled}
-                  setSentinelAiEnabled={setSentinelAiEnabled}
-                  btcAnchoringEnabled={btcAnchoringEnabled}
-                  setBtcAnchoringEnabled={setBtcAnchoringEnabled}
-                  quantumFalconEnabled={quantumFalconEnabled}
-                  setQuantumFalconEnabled={setQuantumFalconEnabled}
+                  addLog={addLog}
                 />
-              </div>
-            )}
-
-            {activeTab === 'explainer' && (
-              <div className="w-full h-full overflow-y-auto custom-scrollbar">
-                <ManifestHub config={config} stats={stats} />
               </div>
             )}
 
             {activeTab === 'governance_dao' && (
-              <div className="w-full h-full overflow-y-auto custom-scrollbar">
+              <div className="w-full h-full overflow-y-auto custom-scrollbar pr-1">
                 <GovernanceDaoHub
                   nodes={nodes}
                   config={config}

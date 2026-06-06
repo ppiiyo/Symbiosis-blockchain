@@ -1,0 +1,48 @@
+name: Continuous Integration & Analysis (CI/CD)
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  pull_request:
+    branches: [ main, master, dev ]
+
+jobs:
+  build-and-test:
+    name: Contract Compilation, Testing, and Security Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Project Dependencies
+        run: npm install
+
+      - name: Run Linter / TypeScript Type Check
+        run: npm run lint
+
+      - name: Execute Hardhat Mocha/Chai Unit Tests
+        run: npx hardhat test --config hardhat.config.cjs
+
+      - name: Execute Istanbul Code Coverage Report
+        run: npx hardhat coverage --config hardhat.config.cjs
+
+      - name: Setup Python Runtime (for Slither Analyzer)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Solc Compiler and Slither
+        run: |
+          pip3 install slither-analyzer solc-select
+          solc-select install 0.8.24
+          solc-select use 0.8.24
+
+      - name: Run Slither Static Vulnerability Analysis
+        run: slither . --filter-paths "node_modules"
