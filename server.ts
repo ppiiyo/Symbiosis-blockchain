@@ -780,6 +780,55 @@ app.post('/api/sdk-call', async (req, res) => {
           status: 1
         }
       });
+    } else if (method === "initiateValidatorExit") {
+      executionLogs.push(`[SDK] Считывание адреса кошелька... [Адрес: Account #${idx}]`);
+      executionLogs.push(`[SDK] Вызов initiateValidatorExit() на NashConsensusRegistry...`);
+      executionLogs.push(`[SDK] Валидатор зарегистрирован в очереди на выход. Период разблокировки (24ч) запущен.`);
+      executionLogs.push(`[🎉 SDK SUCCESS] Выход успешно инициирован!`);
+
+      broadcastSDKEvent('ValidatorExitInitiated', {
+        validator: idx === 0 ? "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" : idx === 1 ? "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" : "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        unbondingEta: String(Math.floor(Date.now() / 1000) + 24 * 3600)
+      });
+
+      return res.json({
+        success: true,
+        simulated: true,
+        txHash: simulatedTxHash,
+        logs: executionLogs.join('\n'),
+        receipt: {
+          to: config.consensusAddress,
+          from: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          gasUsed: "45300",
+          blockNumber: "1432",
+          status: 1
+        }
+      });
+    } else if (method === "withdrawValidatorStake") {
+      executionLogs.push(`[SDK] Считывание адреса кошелька... [Адрес: Account #${idx}]`);
+      executionLogs.push(`[SDK] Вызов withdrawValidatorStake() на NashConsensusRegistry...`);
+      executionLogs.push(`[SDK] Проверка unbonding периода: Завершено.`);
+      executionLogs.push(`[SDK] Возврат stakedAmount на баланс валидатора кошелька...`);
+      executionLogs.push(`[🎉 SDK SUCCESS] Залог успешно выведен!`);
+
+      broadcastSDKEvent('ValidatorStakeWithdrawn', {
+        validator: idx === 0 ? "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" : idx === 1 ? "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" : "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        amountWithdrawn: "100"
+      });
+
+      return res.json({
+        success: true,
+        simulated: true,
+        txHash: simulatedTxHash,
+        logs: executionLogs.join('\n'),
+        receipt: {
+          to: config.consensusAddress,
+          from: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          gasUsed: "32100",
+          blockNumber: "1433",
+          status: 1
+        }
+      });
     } else {
       executionLogs.push(`[SDK] Запущен неопознанный метод '${method}' в симулированном режиме.`);
       return res.json({
@@ -911,6 +960,38 @@ app.post('/api/sdk-call', async (req, res) => {
       broadcastSDKEvent('ValidatorRegistered', {
         node: userAddress,
         initialStake: stk
+      });
+    } else if (method === "initiateValidatorExit") {
+      executionLogs.push(`[SDK CALL] Запуск initiateValidatorExit()...`);
+      const rec = await sdk.initiateValidatorExit();
+      txHash = rec.hash;
+      receipt = {
+        to: rec.to,
+        from: rec.from,
+        gasUsed: rec.gasUsed.toString(),
+        blockNumber: rec.blockNumber.toString(),
+        status: rec.status
+      };
+      executionLogs.push(`[🎉 SDK REAL-SUCCESS] Очередь выхода инициирована на блокчейне! 24ч unbonding запущен.`);
+      broadcastSDKEvent('ValidatorExitInitiated', {
+        validator: userAddress,
+        unbondingEta: String(Math.floor(Date.now() / 1000) + 24 * 3600)
+      });
+    } else if (method === "withdrawValidatorStake") {
+      executionLogs.push(`[SDK CALL] Запуск withdrawValidatorStake()...`);
+      const rec = await sdk.withdrawValidatorStake();
+      txHash = rec.hash;
+      receipt = {
+        to: rec.to,
+        from: rec.from,
+        gasUsed: rec.gasUsed.toString(),
+        blockNumber: rec.blockNumber.toString(),
+        status: rec.status
+      };
+      executionLogs.push(`[🎉 SDK REAL-SUCCESS] Залог успешно выплачен на ваш кошелек!`);
+      broadcastSDKEvent('ValidatorStakeWithdrawn', {
+        validator: userAddress,
+        amountWithdrawn: "100"
       });
     }
 

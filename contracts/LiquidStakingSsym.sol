@@ -34,15 +34,16 @@ contract LiquidStakingSsym is ERC20, ReentrancyGuard {
     }
 
     /// @notice Updates the associated ZK Prover Registry authorized entity
-    /// @dev Only the current zkProverRegistry or the initial zero-state registry can define this
+    /// @dev Requires that only an authorized governor of the SYM token, or the existing zkProverRegistry, can set/change this. This fully prevents frontrunning hijack attacks when initial state is address(0).
     /// @param newRegistry The coordinate address of the new ZK Prover Registry
     function updateZkProver(address newRegistry) external {
-        require(zkProverRegistry == address(0) || msg.sender == zkProverRegistry, "Unauthorized");
+        require(newRegistry != address(0), "New registry cannot be zero address");
+        require(symToken.isGovernor(msg.sender) || (zkProverRegistry != address(0) && msg.sender == zkProverRegistry), "Unauthorized");
         zkProverRegistry = newRegistry;
     }
 
     /// @notice Stakes SYM tokens to receive derivative sSYM shares representing protocol voting rights and reward claims
-    /// @dev Secures token transfers and calculates share division dynamically to avoid dilution
+    /// @dev Secures token transfers and calculates share division dynamically to avoid first-depositor inflation dilution
     /// @param amount Number of SYM tokens to deposit
     function stake(uint256 amount) external nonReentrant {
         require(amount > 0, "Amount must be greater than 0");
@@ -51,10 +52,16 @@ contract LiquidStakingSsym is ERC20, ReentrancyGuard {
 
         uint256 sharesToMint;
         if (totalShares == 0 || totalSym == 0) {
-            sharesToMint = amount;
+            // 🛡️ REMEDIATION: Burn first 1000 shares to make pools mathematically immune to first depositor inflation attacks
+            uint256 MINIMUM_LIQUIDITY = 1000;
+            require(amount > MINIMUM_LIQUIDITY, "First deposit must exceed MINIMUM_LIQUIDITY (1000 wei)");
+            _mint(address(0x000000000000000000000000000000000000dEaD), MINIMUM_LIQUIDITY); // Permanent burn of initial supply
+            sharesToMint = amount - MINIMUM_LIQUIDITY;
         } else {
             sharesToMint = (amount * totalShares) / totalSym;
         }
+
+        require(sharesToMint > 0, "Minted sSYM shares cannot be zero");
 
         symToken.transferFrom(msg.sender, address(this), amount);
         _mint(msg.sender, sharesToMint);

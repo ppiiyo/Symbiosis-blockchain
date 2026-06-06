@@ -58,7 +58,8 @@ describe("Symbiosis Protocol Test Suite", function () {
       await symToken.connect(user).approve(await sSymToken.getAddress(), stakeAmount);
       await sSymToken.connect(user).stake(stakeAmount);
 
-      expect(await sSymToken.balanceOf(user.address)).to.equal(stakeAmount);
+      // 🛡️ User 1 should have stakeAmount - 1000 due to MINIMUM_LIQUIDITY burn (Uniswap pool inflation protection)
+      expect(await sSymToken.balanceOf(user.address)).to.equal(stakeAmount - 1000n);
       expect(await symToken.balanceOf(await sSymToken.getAddress())).to.equal(stakeAmount);
 
       // User 2 stakes (this covers the totalShares > 0 / else branch in stake)
@@ -66,6 +67,7 @@ describe("Symbiosis Protocol Test Suite", function () {
       await symToken.connect(externalUser).approve(await sSymToken.getAddress(), stakeAmount);
       await sSymToken.connect(externalUser).stake(stakeAmount);
 
+      // User 2 receives full proportional shares
       expect(await sSymToken.balanceOf(externalUser.address)).to.equal(stakeAmount);
     });
 
@@ -85,7 +87,7 @@ describe("Symbiosis Protocol Test Suite", function () {
 
       await sSymToken.connect(user).unstake(unstakeAmount);
 
-      expect(await sSymToken.balanceOf(user.address)).to.equal(ethers.parseEther("50"));
+      expect(await sSymToken.balanceOf(user.address)).to.equal(ethers.parseEther("50") - 1000n);
       expect(await symToken.balanceOf(user.address)).to.equal(ethers.parseEther("50"));
     });
 
@@ -96,8 +98,8 @@ describe("Symbiosis Protocol Test Suite", function () {
     });
 
     it("Should handle updateZkProver correctly for authorized and unauthorized callers", async function () {
-      // 1. Initial set (since zkProverRegistry is address(0)) should succeed for anyone
-      await sSymToken.connect(user).updateZkProver(user.address);
+      // 1. Initial set (zkProverRegistry is address(0)) should require owner (who is governor)
+      await sSymToken.connect(owner).updateZkProver(user.address);
       expect(await sSymToken.zkProverRegistry()).to.equal(user.address);
 
       // 2. Random user attempt to overwrite should fail
@@ -130,7 +132,12 @@ describe("Symbiosis Protocol Test Suite", function () {
       const penalty = (initialStake * 15n) / 100n; 
       const rewardAmount = penalty / 2n; 
 
-      await consensus.triggerLazySlashing(validator.address, whistleblower.address, 12345n);
+      const blockHash1 = ethers.zeroPadValue("0x11", 32);
+      const blockHash2 = ethers.zeroPadValue("0x22", 32);
+      const sig1 = "0x" + "00".repeat(99);
+      const sig2 = "0x" + "00".repeat(99);
+
+      await consensus.triggerLazySlashing(validator.address, whistleblower.address, 12345n, blockHash1, sig1, blockHash2, sig2);
 
       valInfo = await consensus.validators(validator.address);
       expect(valInfo.isSlashed).to.be.true;
@@ -189,13 +196,49 @@ describe("Symbiosis Protocol Test Suite", function () {
       const fakeFalconPubKey = ethers.hexlify(ethers.randomBytes(32));
       await consensus.connect(validator).registerValidator(initialStake, fakeFalconPubKey);
 
+      const blockHash1 = ethers.zeroPadValue("0x11", 32);
+      const blockHash2 = ethers.zeroPadValue("0x22", 32);
+      const sig1 = "0x" + "00".repeat(99);
+      const sig2 = "0x" + "00".repeat(99);
+
       // First slash
-      await consensus.triggerLazySlashing(validator.address, whistleblower.address, 12345n);
+      await consensus.triggerLazySlashing(validator.address, whistleblower.address, 12345n, blockHash1, sig1, blockHash2, sig2);
 
       // Second slash must fail
       await expect(
-        consensus.triggerLazySlashing(validator.address, whistleblower.address, 12345n)
+        consensus.triggerLazySlashing(validator.address, whistleblower.address, 12345n, blockHash1, sig1, blockHash2, sig2)
       ).to.be.revertedWith("Node is already slashed");
+    });
+
+    it("Should allow validator exit and withdraw stake after unbonding period", async function () {
+      const initialStake = ethers.parseEther("100");
+      await symToken.transfer(validator.address, initialStake);
+      await symToken.connect(validator).approve(await consensus.getAddress(), initialStake);
+      const fakeFalconPubKey = ethers.hexlify(ethers.randomBytes(32));
+      await consensus.connect(validator).registerValidator(initialStake, fakeFalconPubKey);
+
+      // Check exit request
+      await consensus.connect(validator).initiateValidatorExit();
+      const eta = await consensus.unbondingEta(validator.address);
+      expect(eta).to.be.greaterThan(0n);
+
+      // Try withdrawing before period (fails)
+      await expect(
+        consensus.connect(validator).withdrawValidatorStake()
+      ).to.be.revertedWith("Unbonding period active");
+
+      // Fast forward time
+      await ethers.provider.send("evm_increaseTime", [24 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine");
+
+      // Withdraw stake
+      const prevBal = await symToken.balanceOf(validator.address);
+      await consensus.connect(validator).withdrawValidatorStake();
+      const postBal = await symToken.balanceOf(validator.address);
+      expect(postBal - prevBal).to.equal(initialStake);
+
+      const valInfo = await consensus.validators(validator.address);
+      expect(valInfo.stakedAmount).to.equal(0n);
     });
   });
 

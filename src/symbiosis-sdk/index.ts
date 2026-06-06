@@ -296,6 +296,40 @@ export class SymbiosisSDK {
   }
 
   /**
+   * Initiates the validator exit/unbonding process in the Nash Consensus Registry.
+   * @returns Detailed transaction receipt
+   */
+  public async initiateValidatorExit(): Promise<ethers.ContractTransactionReceipt> {
+    try {
+      const signer = await this.getSigner();
+      const consensusWithSigner = this.consensusContract.connect(signer) as ethers.Contract;
+      const tx = await consensusWithSigner.initiateValidatorExit();
+      const receipt = await tx.wait();
+      if (!receipt) throw new Error("Initiating validator exit failed.");
+      return receipt;
+    } catch (err: any) {
+      throw new Error(parseSDKError(err));
+    }
+  }
+
+  /**
+   * Withdraws the validator's staked collateral after the unbonding period has passed.
+   * @returns Detailed transaction receipt
+   */
+  public async withdrawValidatorStake(): Promise<ethers.ContractTransactionReceipt> {
+    try {
+      const signer = await this.getSigner();
+      const consensusWithSigner = this.consensusContract.connect(signer) as ethers.Contract;
+      const tx = await consensusWithSigner.withdrawValidatorStake();
+      const receipt = await tx.wait();
+      if (!receipt) throw new Error("Withdrawing validator stake failed.");
+      return receipt;
+    } catch (err: any) {
+      throw new Error(parseSDKError(err));
+    }
+  }
+
+  /**
    * Decentralized Reactive Event Listener mechanism in symbiosis-sdk.
    * Subscribes to smart contract evm events using live web socket or rpc client listeners,
    * avoiding polling and permitting real-time dApp reactivity.

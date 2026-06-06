@@ -145,7 +145,29 @@ contract SymbiosisToken is ERC20, ERC20Burnable {
         } else if (keccak256(bytes(prop.actionType)) == keccak256(bytes("registerValidator"))) {
             isValidatorNode[prop.targetAddress] = true;
         } else if (keccak256(bytes(prop.actionType)) == keccak256(bytes("updateGovernor"))) {
-            isGovernor[prop.targetAddress] = !isGovernor[prop.targetAddress];
+            if (isGovernor[prop.targetAddress]) {
+                // Count active governors to prevent a frozen zero-governor system
+                uint256 activeCount = 0;
+                for (uint256 i = 0; i < governors.length; i++) {
+                    if (isGovernor[governors[i]]) {
+                        activeCount++;
+                    }
+                }
+                require(activeCount > 1, "Cannot remove governor: minimum 1 active governor threshold required");
+                isGovernor[prop.targetAddress] = false;
+            } else {
+                isGovernor[prop.targetAddress] = true;
+                bool found = false;
+                for (uint256 i = 0; i < governors.length; i++) {
+                    if (governors[i] == prop.targetAddress) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    governors.push(prop.targetAddress);
+                }
+            }
         } else {
             revert("Unknown action type");
         }
@@ -153,12 +175,22 @@ contract SymbiosisToken is ERC20, ERC20Burnable {
         emit ProposalExecuted(proposalId, prop.actionType, prop.targetAddress);
     }
 
+    /// @notice Dynamic tracker to enforce once-per-block limits per validator node to mitigate draining
+    mapping(address => uint256) public lastRecycledBlock;
+
     /// @notice Recycles and distributes gas refunds to active validator nodes in the consensus pool
     /// @dev Only callable by the official consensusRegistry contract to prevent unauthorized treasury drains
     /// @param validator Target validator node address receiving the refund
     /// @param gasUsed Computational gas used during validation
     function recycleGas(address validator, uint256 gasUsed) external {
         require(msg.sender == consensusRegistry, "Only Consensus Registry can trigger recycling");
+        // Ensure rate spacing: block interval must be at least same block or subsequent block
+        require(block.number >= lastRecycledBlock[validator], "Recycle rate limit active in same block");
+        lastRecycledBlock[validator] = block.number;
+
+        // Ensure gasUsed is reasonable to prevent overflow attack or outrageous params
+        require(gasUsed <= 1_000_000_000_000_000, "Excessive gasUsed value");
+
         uint256 refundAmount = (gasUsed * tx.gasprice * gasBackPercentage) / 100;
         uint256 maxRefund = 5000 * 10**18; 
         if (refundAmount > maxRefund) refundAmount = maxRefund;

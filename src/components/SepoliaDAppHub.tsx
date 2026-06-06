@@ -490,6 +490,26 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
                     </button>
                   </div>
                 </div>
+
+                <div className="pt-3 border-t border-zinc-900/40 mt-4">
+                  <span className="text-zinc-500 block text-[9.5px] uppercase tracking-wider mb-2 font-bold font-sans">Очередь вывода валидатора (Validator Exit Queue)</span>
+                  <div className="grid grid-cols-2 gap-2 font-mono text-xs">
+                    <button
+                      onClick={() => executeSDKCall('initiateValidatorExit', {})}
+                      disabled={executing}
+                      className="bg-amber-950/20 hover:bg-amber-950/40 border border-amber-900/30 text-amber-400 font-bold text-xs py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Инициировать выход
+                    </button>
+                    <button
+                      onClick={() => executeSDKCall('withdrawValidatorStake', {})}
+                      disabled={executing}
+                      className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-bold text-xs py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Вывести 100+ SYM
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
