@@ -19,6 +19,8 @@ import { ControlPanel } from './components/ControlPanel';
 import { MetricsDashboard } from './components/MetricsDashboard';
 import { GovernanceDaoHub } from './components/GovernanceDaoHub';
 import { SepoliaDAppHub } from './components/SepoliaDAppHub';
+import { LightNodeMinerGame } from './components/LightNodeMinerGame';
+import { SymbiosisRoadmap } from './components/SymbiosisRoadmap';
 import { 
   Shield, 
   ShieldAlert, 
@@ -34,7 +36,9 @@ import {
   Activity,
   Database,
   Vote,
-  Globe
+  Globe,
+  Smartphone,
+  TrendingUp
 } from 'lucide-react';
 
 export default function App() {
@@ -71,7 +75,7 @@ export default function App() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [activeAttack, setActiveAttack] = useState<'none' | 'double_spend' | 'lazy_takeover' | 'sybil'>('none');
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'network' | 'sepolia' | 'governance_dao'>('network');
+  const [activeTab, setActiveTab] = useState<'network' | 'sepolia' | 'governance_dao' | 'tap_to_verify' | 'roadmap'>('network');
 
   const [userBalance, setUserBalance] = useState<number>(12500); // Starting capital for investor simulation
   const [userStakedNodes, setUserStakedNodes] = useState<{ [nodeId: string]: number }>({});
@@ -634,6 +638,32 @@ export default function App() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
               </span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('tap_to_verify')}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 relative ${
+                activeTab === 'tap_to_verify'
+                  ? 'bg-zinc-900 text-orange-400 border border-purple-900/30'
+                  : 'text-zinc-400 hover:text-orange-400 hover:bg-zinc-950'
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5 text-orange-400" /> 🎮 Ловушки (Tap Game)
+              <span className="absolute -top-1 -right-1.5 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('roadmap')}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'roadmap'
+                  ? 'bg-zinc-900 text-emerald-450 border border-emerald-900/30'
+                  : 'text-zinc-400 hover:text-emerald-400 hover:bg-zinc-950'
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-450" /> 🗺️ Дорожная Карта
+            </button>
           </div>
 
           <div className="flex-1 min-h-0 relative">
@@ -682,6 +712,23 @@ export default function App() {
                   onChangeUserBalance={setUserBalance}
                   addLog={addLog}
                 />
+              </div>
+            )}
+
+            {activeTab === 'tap_to_verify' && (
+              <div className="w-full h-full overflow-y-auto custom-scrollbar pr-1">
+                <LightNodeMinerGame
+                  userBalance={userBalance}
+                  onChangeUserBalance={setUserBalance}
+                  addLog={addLog}
+                  nodes={nodes}
+                />
+              </div>
+            )}
+
+            {activeTab === 'roadmap' && (
+              <div className="w-full h-full overflow-y-auto custom-scrollbar pr-1">
+                <SymbiosisRoadmap />
               </div>
             )}
           </div>
