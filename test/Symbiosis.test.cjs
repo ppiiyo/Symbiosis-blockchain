@@ -163,6 +163,12 @@ describe("Symbiosis Protocol Test Suite", function () {
     });
 
     it("Should verify Falcon Signatures and execute precompile branch coverage", async function () {
+      const initialStake = ethers.parseEther("100");
+      await symToken.transfer(validator.address, initialStake);
+      await symToken.connect(validator).approve(await consensus.getAddress(), initialStake);
+      const fakeFalconPubKey = ethers.hexlify(ethers.randomBytes(32));
+      await consensus.connect(validator).registerValidator(initialStake, fakeFalconPubKey);
+
       const fakeHash = ethers.zeroPadValue("0x12", 32);
       const fakeSig = ethers.hexlify(ethers.randomBytes(64));
 

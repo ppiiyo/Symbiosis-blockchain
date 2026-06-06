@@ -77,6 +77,50 @@ export default function App() {
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'network' | 'sepolia' | 'governance_dao' | 'tap_to_verify' | 'roadmap'>('network');
 
+  const [patchedVulnerabilities, setPatchedVulnerabilities] = useState<{ [id: string]: boolean }>({
+    unrestricted_slashing: false,
+    mock_signature: false,
+    privilege_escalation: false,
+    first_depositor: false,
+    gas_recycling: false,
+    withdrawal_exit: false,
+    proposal_limits: false,
+    token_rescuing: false,
+    zero_governors: false,
+    reentrancy: false,
+  });
+
+  const handleTogglePatch = (id: string) => {
+    setPatchedVulnerabilities(prev => {
+      const updated = { ...prev, [id]: !prev[id] };
+      const patchNames: { [k: string]: string } = {
+        unrestricted_slashing: "Ограничение слэшинга (Добавление крипто-пруверов)",
+        mock_signature: "Полная верификация PQ-подписей Falcon",
+        privilege_escalation: "Защита ZK-реестра от захвата ролей",
+        first_depositor: "Предотвращение инфляционной атаки первого депозитора",
+        gas_recycling: "Рейт-лимиты и фильтрация утилизации газа",
+        withdrawal_exit: "Вывод залога валидатора (Unbonding exit queue)",
+        proposal_limits: "Лимиты на предложения казначейства",
+        token_rescuing: "Спасение заблокированных токенов",
+        zero_governors: "Ограничения на нулевой уровень губернаторов",
+        reentrancy: "Анти-реентранси блокировки стейкинга"
+      };
+      addLog(`🛡️ БЕЗОПАСНОСТЬ: Ревизия патча '${patchNames[id] || id}' переведена в состояние [${updated[id] ? "АНКЕРОВАНО / ЗАЩИЩЕНО" : "ВЫКЛЮЧЕНО / УЯЗВИМО"}].`);
+      return updated;
+    });
+  };
+
+  const handleToggleAllPatches = (value: boolean) => {
+    setPatchedVulnerabilities(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(k => {
+        updated[k] = value;
+      });
+      addLog(`🛡️ БЕЗОПАСНОСТЬ: Все 10 патчей смарт-контрактов ${value ? "УСПЕШНО ИНТЕГРИРОВАНЫ" : "ДEАКТИВИРОВАНЫ (Сеть возвращена в уязвимое состояние)"}!`);
+      return updated;
+    });
+  };
+
   const [userBalance, setUserBalance] = useState<number>(12500); // Starting capital for investor simulation
   const [userStakedNodes, setUserStakedNodes] = useState<{ [nodeId: string]: number }>({});
   const [userClaimableRewards, setUserClaimableRewards] = useState<number>(0);
@@ -697,6 +741,7 @@ export default function App() {
                   onUnstake={handleUnstake}
                   userClaimableRewards={userClaimableRewards}
                   addLog={addLog}
+                  patchedVulnerabilities={patchedVulnerabilities}
                 />
               </div>
             )}
@@ -711,6 +756,9 @@ export default function App() {
                   userBalance={userBalance}
                   onChangeUserBalance={setUserBalance}
                   addLog={addLog}
+                  patchedVulnerabilities={patchedVulnerabilities}
+                  onTogglePatch={handleTogglePatch}
+                  onToggleAllPatches={handleToggleAllPatches}
                 />
               </div>
             )}

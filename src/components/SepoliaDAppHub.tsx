@@ -31,6 +31,7 @@ interface SepoliaDAppHubProps {
   onUnstake: (amount?: number) => void;
   userClaimableRewards: number;
   addLog: (msg: string) => void;
+  patchedVulnerabilities?: { [id: string]: boolean };
 }
 
 export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
@@ -42,7 +43,8 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
   onClaimRewards,
   onUnstake,
   userClaimableRewards,
-  addLog
+  addLog,
+  patchedVulnerabilities = {} as { [id: string]: boolean }
 }) => {
   // SDK Tab selection: 'stake' | 'register_validator' | 'lazy_slashing'
   const [activeSubTab, setActiveSubTab] = useState<'stake' | 'register_validator' | 'lazy_slashing'>('stake');
@@ -104,6 +106,38 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
     setExecuting(true);
     addConsoleLog(`📡 [START] Отправка вызова метода '${method}' на серверный контроллер (EVM Sepolia Smart Contract Proxier)...`);
     
+    // 🛡️ Live Audit Patches virtual execution filters
+    if (method === 'slash') {
+      if (patchedVulnerabilities.unrestricted_slashing) {
+        setTimeout(() => {
+          addConsoleLog(`🛡️ [SECURED REVERT] Сбой выполнения транзакции на контракте NashConsensusRegistry!`);
+          addConsoleLog(`❌ Ошибка EVM (Revert): "triggerLazySlashing is locked. Invalid Double-Signing cryptographic evidence."`);
+          addConsoleLog(`💡 Подсказка: Патч №1 (Неограниченный слэшинг) успешно заблокировал вызов слэшинга без доказательств double-signing!`);
+          setExecuting(false);
+        }, 1200);
+        return;
+      }
+    }
+
+    if (method === 'stake') {
+      if (patchedVulnerabilities.first_depositor) {
+        addConsoleLog(`🛡️ [SECURED COMPLIANCE] Проверка формулы пула благополучно завершена. Патч первого вкладчика заблокировал округление к нулю через сгорание MINIMUM_LIQUIDITY.`);
+      } else {
+        const poolShares = userStakedNodes['pool-ssym'] || 0;
+        if (poolShares === 0) {
+          addConsoleLog(`⚠️ [WARN: VULNERABLE POOL] ВНИМАНИЕ! Вы выполняете первый депозит в пул sSYM, в то время как патч инфляции выключен. Система уязвима к краже долей через прямые пожертвования SYM!`);
+        }
+      }
+    }
+
+    if (method === 'registerValidator') {
+      if (patchedVulnerabilities.mock_signature) {
+        addConsoleLog(`🛡️ [EMV SECURED] Окружение валидировано: стабы длины 99 байт заблокированы. Инициирована честная верификация через ассемблерные PQ-генераторы.`);
+      } else {
+        addConsoleLog(`⚠️ [WARN: UNSECURED] ВНИМАНИЕ! Магический обход signature.length = 99 активен. Любой валидатор может зарегистрироваться фиктивным ключом!`);
+      }
+    }
+
     try {
       const response = await fetch('/api/sdk-call', {
         method: 'POST',
