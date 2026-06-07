@@ -16,7 +16,11 @@ import {
   AlertOctagon,
   Wrench,
   Cpu,
-  BadgeAlert
+  BadgeAlert,
+  Play,
+  Flame,
+  Terminal,
+  RefreshCw
 } from 'lucide-react';
 import { ValidatorNode, SimulationConfig } from '../types';
 
@@ -305,10 +309,258 @@ export const GovernanceDaoHub: React.FC<GovernanceDaoHubProps> = ({
   onTogglePatch,
   onToggleAllPatches
 }) => {
-  const [governanceTab, setGovernanceTab] = useState<'dao' | 'compliance'>('dao');
+  const [governanceTab, setGovernanceTab] = useState<'dao' | 'compliance' | 'stress_tests'>('dao');
   const [severityFilter, setSeverityFilter] = useState<'all' | 'critical' | 'high' | 'medium' | 'low'>('all');
   const [expandedFinding, setExpandedFinding] = useState<string | null>(null);
+  const [showAdvancedSecurityLab, setShowAdvancedSecurityLab] = useState<boolean>(false);
   
+  // State variables for interactive stress testing
+  const [selectedStressTest, setSelectedStressTest] = useState<string>("slash_attack");
+  const [runningTest, setRunningTest] = useState<boolean>(false);
+  const [testLogs, setTestLogs] = useState<string[]>([]);
+  const [testProgress, setTestProgress] = useState<number>(0);
+  const [testOutcome, setTestOutcome] = useState<'success' | 'failure' | 'none'>('none');
+
+  // Interactive Stress Tests List defining smart contract attack scenarios
+  const stressTestsList = [
+    {
+      id: "slash_attack",
+      name: "S-1: Whistleblower Bounty Exploit (Unrestricted Slashing)",
+      vulnId: "unrestricted_slashing",
+      severity: "critical",
+      contract: "NashConsensusRegistry.sol",
+      vulnName: "Неограниченный слэшинг",
+      attacker: "0xAttacker_925a...49fd",
+      targetAddress: "BenignValidator (0xf39F...2266)",
+      objective: "Срезать залог чужого валидатора без доказательств саботажа и присвоить его whistleblower награду себе (7.5%).",
+      payload: "triggerLazySlashing(targetNodeAddress, msg.sender, blockNumber, 0x0, [], 0x0, [])",
+      steps: [
+        "[09:14:02] Подготовка эксплойта на сервере атакующего...",
+        "[09:14:03] Сканирование контракта NashConsensusRegistry...",
+        "[09:14:04] Обнаружен активный валидатор '0xf39...2266' с залогом 10 000 SYM.",
+        "[09:14:05] Вызов triggerLazySlashing() без передачи валидных Falcon-подписей...",
+        "[09:14:06] Транзакция отправлена в пул блоков..."
+      ],
+      successLogs: [
+        "[09:14:07] 🔥 ТРАНЗАКЦИЯ УСПЕШНО ВЫПОЛНЕНА! (Блок #492815)",
+        "[09:14:08] 💥 Узел 0xf39...2266 отмечен как взломанный (isSlashed = true)",
+        "[09:14:09] 💥 С залога валидатора списан штраф 750 SYM (7.5%)",
+        "[09:14:10] 🎉 Награда whistleblower в размере 375 SYM переведена хакеру!",
+        "💥 СТРЕСС-ТЕСТ ПРОВАЛЕН! Контракт уязвим. Капитал украден."
+      ],
+      blockedLogs: [
+        "[09:14:07] 🛡️ ТРАНЗАКЦИЯ ОТКЛОНЕНА СЕТЬЮ (EVM TRANSACTION REVERTED)",
+        "[09:14:08] 🛑 Ошибка: 'Invalid signature 1' | 'Signature count must be 2'",
+        "[09:14:09] 🛡️ Смарт-контракт заблокировал вызов: требуются валидные Falcon-подписи двойного подписания!",
+        "[09:14:10] 🛡️ Залог валидатора в безопасности (10 000 SYM сохранены).",
+        "🛡️ СТРЕСС-ТЕСТ УСПЕШНО ПРОЙДЕН! Контракт защищен криптографическим патчем."
+      ]
+    },
+    {
+      id: "signature_bypass",
+      name: "S-2: Falcon-512 Signature Mock Bypass",
+      vulnId: "mock_signature",
+      secondaryId: "mock_signature",
+      severity: "critical",
+      contract: "NashConsensusRegistry.sol",
+      vulnName: "Заглушка проверки подписей",
+      attacker: "0xAttacker_925a...49fd",
+      targetAddress: "NashConsensusRegistry.verifyFalconSignature",
+      objective: "Подделать блок-подпись Falcon-512 для финализации скомпрометированного блока транзакций, послав 99-байтную сигнатуру.",
+      payload: "verifyFalconSignature(validator, corruptedHash, signature_len_99)",
+      steps: [
+        "[09:15:30] Поиск уязвимостей в ассемблерной верификации решеток Falcon...",
+        "[09:15:31] Обнаружено: подписи длиной ровно 99 байт минуют NTRU-декодирование.",
+        "[09:15:32] Моделирование фрейма фиктивной подписи (99 байт нулей)...",
+        "[09:15:33] Публикация транзакции с коррумпированным верификатором блоков..."
+      ],
+      successLogs: [
+        "[09:15:34] 🔥 TРАНЗАКЦИЯ ПРИНЯТА! (Bypass finalization)",
+        "[09:15:35] 💥 Функция verifyFalconSignature() вернула TRUE для фальсифицированного блока!",
+        "[09:15:36] 💥 Двойной голос злоумышленника успешно засчитан сетью консенсуса!",
+        "[09:15:37] 💥 Математическая безопасность византийского консенсуса полностью разрушена.",
+        "💥 СТРЕСС-ТЕСТ ПРОВАЛЕН! Любой адрес может генерировать голоса блоков вне криптографического консенсуса."
+      ],
+      blockedLogs: [
+        "[09:15:34] 🛡️ ТРАНЗАКЦИЯ ОТКЛОНЕНА: 'Mock stubs strictly disabled in production'",
+        "[09:15:35] 🛑 Ошибка: Заглушки верификации отключены вне тестовой сети Hardhat (ChainID != 31337).",
+        "[09:15:36] 🛡️ Вызов принудительно направлен на ассемблерный прекомпилятор по адресу 0xF9!",
+        "[09:15:37] 🛡️ Поддельный голос отклонен. Результат верификации: false.",
+        "🛡️ СТРЕСС-ТЕСТ УСПЕШНО ПРОЙДЕН! Фальшивые подписи отклонены EVM."
+      ]
+    },
+    {
+      id: "prover_takeover",
+      name: "S-3: ZK Prover Registry Role Theft",
+      vulnId: "privilege_escalation",
+      severity: "critical",
+      contract: "LiquidStakingSsym.sol",
+      vulnName: "Незащищенный захват реестра ZK",
+      attacker: "0xAttacker_925a...49fd",
+      targetAddress: "LiquidStakingSsym (zkProverRegistry)",
+      objective: "Захватить административное управление ZK Prover реестром защиты ликвидного стейкинга.",
+      payload: "updateZkProver(msg.sender)",
+      steps: [
+        "[09:17:10] Опрос состояния смарт-контракта LiquidStakingSsym...",
+        "[09:17:11] Переменная zkProverRegistry не инициализирована (равна 0x000...00).",
+        "[09:17:12] Подготовка вызова updateZkProver() со своим адресом...",
+        "[09:17:13] Транзакция отправлена в сеть..."
+      ],
+      successLogs: [
+        "[09:17:14] 🔥 ТРАНЗАКЦИЯ ВЫПОЛНЕНА! (Privilege escalation)",
+        "[09:17:15] 💥 Адрес ZK Prover изменен на 0xAttacker_925a...49fd!",
+        "[09:17:16] 💥 Хакер получил монопольное право на управление защитными проверками валидаторов!",
+        "[09:17:17] 💥 Баланс и права управления жидким стейкингом скомпрометированы.",
+        "💥 СТРЕСС-ТЕСТ ПРОВАЛЕН! Преимущественные права администратора похищены."
+      ],
+      blockedLogs: [
+        "[09:17:14] 🛡️ ТРАНЗАКЦИЯ ОТКЛОНЕНА: 'Caller is not the Prover or Governor'",
+        "[09:17:15] 🛑 Ошибка: Изменение реестра доступно только уполномоченным губернаторам или проуверам.",
+        "[09:17:16] 🛡️ Права доступа защищены мультисигом. Транзакция отменена.",
+        "[09:17:17] 🛡️ Роль zkProverRegistry осталась закрытой от сторонних вмешательств.",
+        "🛡️ СТРЕСС-ТЕСТ УСПЕШНО ПРОЙДЕН! Попытка захвата прав отбита."
+      ]
+    },
+    {
+      id: "inflation_attack",
+      name: "S-4: Rounding-Error Pool Donation (First Depositor Attack)",
+      vulnId: "first_depositor",
+      severity: "critical",
+      contract: "LiquidStakingSsym.sol",
+      vulnName: "Инфляционная атака первого вкладчика",
+      attacker: "0xAttacker_925a...49fd",
+      targetAddress: "Secondary Depositor (Депозит 50 000 SYM)",
+      objective: "Сделать вклад в 1 wei, искусственно раздуть пул донатом в 100 000 SYM и согнать баланс долей второго вкладчика в 0.",
+      payload: "stake(1 wei) -> donation(100,000 SYM) -> stake(50,000 SYM)",
+      steps: [
+        "[09:18:45] Атакующий вносит первый депозит в пул ликвидности: 1 wei (shares = 1).",
+        "[09:18:46] Прямой перевод доната 100,000 SYM на баланс контракта со стороны хакера...",
+        "[09:18:47] Балансовый индекс пула: 1 share = 100,000 SYM.",
+        "[09:18:48] Легитимный инвестор вносит депозит на сумму 50,000 SYM.",
+        "[09:18:49] Расчёт долей вкладчика: shares = (50,000 * 1) / 100,001 = 0 долей."
+      ],
+      successLogs: [
+        "[09:18:50] 🔥 ДЕПОЗИТ ЗАВЕРШЕН С НУЛЕВЫМ ДЕЛЕНИЕМ!",
+        "[09:18:51] 💥 Пользователь внес 50,000 SYM и получил ровно 0 долей sSYM!",
+        "[09:18:52] 💥 Вся сумма перешла под контроль хакера, владеющего единственной долей в пуле!",
+        "[09:18:53] 💥 Ущерб составил 50,000 SYM за счет уязвимости округления долей.",
+        "💥 СТРЕСС-ТЕСТ ПРОВАЛЕН! Новые инвесторы лишаются баланса при первом вкладе."
+      ],
+      blockedLogs: [
+        "[09:18:50] 🛡️ ТРАНЗАКЦИЯ ЗАБЛОКИРОВАНА (EVM TRANSACTION REVERTED)",
+        "[09:18:51] 🛑 Ошибка: 'Shares amount cannot be zero'",
+        "[09:18:52] 🛡️ Патч пула LiquidStaking запретил выпуск нулевого объема долей для новых пользователей.",
+        "[09:18:53] 🛡️ Первые 1000 долей пула (MINIMUM_LIQUIDITY) заблокированы на сжигание, делая атаку донации неэффективной.",
+        "🛡️ СТРЕСС-ТЕСТ УСПЕШНО ПРОЙДЕН! Инфляционная уязвимость нейтрализована."
+      ]
+    },
+    {
+      id: "gas_drain",
+      name: "S-5: Manipulated Gas telemetry (Refund Drainage)",
+      vulnId: "gas_recycling",
+      severity: "high",
+      contract: "SymbiosisToken.sol",
+      vulnName: "Манипуляция утилизацией газа",
+      attacker: "0xAttacker_925a...49fd",
+      targetAddress: "Gasback Refund Treasury Pool (500 000 SYM)",
+      objective: "Передать фальсифицированные метрики gasUsed с целью вывода неограниченых сумм компенсации из казначейства.",
+      payload: "recycleGas(msg.sender, 999,999,999)",
+      steps: [
+        "[09:20:15] Инициирование взаимодействия со смарт-контрактом токена...",
+        "[09:20:16] Подделка отчета о затраченном газе (gas used = 1 000 000 000 ед.)...",
+        "[09:20:17] Вызов функции recycleGas()...",
+        "[09:20:18] Ожидание казначейского транша ребейта..."
+      ],
+      successLogs: [
+        "[09:20:19] 🔥 КОМПЕНСАЦИЯ ВЫДАНА! (Gasback Drainage)",
+        "[09:20:20] 💥 Смарт-контракт выплатил максимальный ребейт в размере 5,000 SYM!",
+        "[09:20:21] 💥 Хакер полностью исчерпал ликвидность возврата фиктивными логами.",
+        "💥 СТРЕСС-ТЕСТ ПРОВАЛЕН! Казначейство уязвимо к хищению газа."
+      ],
+      blockedLogs: [
+        "[09:20:19] 🛡️ ТРАНЗАКЦИЯ ОТКЛОНЕНА: 'Manipulated gasUsed value exceeds tx.gaslimit range'",
+        "[09:20:20] 🛑 Ошибка: Переданное значение превышает реальный tx.gaslimit транзакции.",
+        "[09:20:21] 🛡️ Смарт-контракт заблокировал выплату ребейта. Введенные лимиты rate-limiting и сверка лимитов защитили балансы.",
+        "🛡️ СТРЕСС-ТЕСТ УСПЕШНО ПРОЙДЕН! Выплата ограничена реальным лимитом транзакции."
+      ]
+    },
+    {
+      id: "reentrancy_attack",
+      name: "S-6: Checks-Effects-Interactions Reentrancy Exploit",
+      vulnId: "reentrancy",
+      severity: "low",
+      contract: "LiquidStakingSsym.sol",
+      vulnName: "Нарушение паттерна CEI",
+      attacker: "0xAttacker_925a...49fd",
+      targetAddress: "LiquidStakingSsym.unstake",
+      objective: "Выполнить повторный рекурсивный вызов метода unstake() в fallback функции контракта до списания остатка баланса долей.",
+      payload: "unstake(10,000 shares) -> fallback() -> unstake(10,000 shares)",
+      steps: [
+        "[09:22:00] Развертывание вредоносного смарт-контракта в тестовой сети...",
+        "[09:22:01] Размещение депозита для генерации sSYM токенов...",
+        "[09:22:02] Инициирование транзакции вывода активов unstake(10,000 shares)...",
+        "[09:22:03] Контракт пересылает оригинальные токены SYM на адрес хакера...",
+        "[09:22:04] Срабатывает fallback() контрактного адреса атакующего, повторно вызывая unstake()..."
+      ],
+      successLogs: [
+        "[09:22:05] 🔥 КЛАССИЧЕСКИЙ РЕЕНТРАНСИ ОДОБРЕН!",
+        "[09:22:06] 💥 Баланс вклада еще не был уменьшен в памяти EVM при повторном сеансе!",
+        "[09:22:07] 💥 Хакер получил двойную выплату SYM, имея всего 10,000 SYM в доле!",
+        "[09:22:08] 💥 Смарт-контракт LiquidStakingSsym полностью обезвожен.",
+        "💥 СТРЕСС-ТЕСТ ПРОВАЛЕН! Двойной вывод активов совершен успешно."
+      ],
+      blockedLogs: [
+        "[09:22:05] 🛡️ ТРАНЗАКЦИЯ ОТКЛОНЕНА СЕТЬЮ (EVM TRANSACTION REVERTED)",
+        "[09:22:06] 🛑 Ошибка: Списание долей _burn() теперь выполняется ДО трансфера SYM (паттерн CEI). Попытка повторного входа заблокирована.",
+        "[09:22:07] 🛡️ Баланс защищен. Транзакция хакера полностью отменена.",
+        "🛡️ СТРЕСС-ТЕСТ УСПЕШНО ПРОЙДЕН! Превентивная защита от реентранси заблокировала повторный вызов."
+      ]
+    }
+  ];
+
+  const handleRunStressTest = (scenarioId: string) => {
+    if (runningTest) return;
+    const scenario = stressTestsList.find(s => s.id === scenarioId);
+    if (!scenario) return;
+
+    setRunningTest(true);
+    setTestProgress(0);
+    setTestOutcome('none');
+    setTestLogs([]);
+
+    const isPatched = patchedVulnerabilities[scenario.vulnId] || false;
+    let stepIndex = 0;
+    const allSteps = [...scenario.steps];
+    
+    // Add logs step-by-step
+    const interval = setInterval(() => {
+      if (stepIndex < allSteps.length) {
+        setTestLogs(prev => [...prev, allSteps[stepIndex]]);
+        setTestProgress(Math.round(((stepIndex + 1) / (allSteps.length + 5)) * 100));
+        stepIndex++;
+      } else {
+        clearInterval(interval);
+        
+        // Now stream the outcome logs
+        const outcomeLogs = isPatched ? scenario.blockedLogs : scenario.successLogs;
+        let outcomeIndex = 0;
+        
+        const outcomeInterval = setInterval(() => {
+          if (outcomeIndex < outcomeLogs.length) {
+            setTestLogs(prev => [...prev, outcomeLogs[outcomeIndex]]);
+            setTestProgress(Math.round(((allSteps.length + outcomeIndex + 1) / (allSteps.length + outcomeLogs.length)) * 100));
+            outcomeIndex++;
+          } else {
+            clearInterval(outcomeInterval);
+            setRunningTest(false);
+            setTestOutcome(isPatched ? 'failure' : 'success'); // If patch is active, exploit fails -> 'failure' (success for protocol stability)
+            addLog(`⚔️ СТРЕСС-ТЕСТ: Запущена симуляция '${scenario.name}'. Результат: ${isPatched ? "ЗАЩИЩЕНО (Патч активен)" : "УЯЗВИМО (Система взломана)"}.`);
+          }
+        }, 550);
+      }
+    }, 450);
+  };
+
   // Voting power calculated dynamically from sSYM delegated stake + standard balance weight
   const totalStake = Object.values(userStakedNodes).reduce((sum: number, val: any) => sum + (val || 0), 0) as number;
   const votingPower = Math.round(1000 + totalStake);
@@ -424,7 +676,7 @@ export const GovernanceDaoHub: React.FC<GovernanceDaoHubProps> = ({
             onClick={() => setGovernanceTab('dao')}
             className={`px-4 py-1.5 rounded-md text-xs font-bold font-sans transition-all cursor-pointer flex items-center gap-1.5 ${
               governanceTab === 'dao'
-                ? 'bg-zinc-900 text-purple-400 border border-purple-900/30 shadow'
+                ? 'bg-zinc-900 text-purple-400 border border-purple-900/30'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -447,6 +699,17 @@ export const GovernanceDaoHub: React.FC<GovernanceDaoHubProps> = ({
               </span>
             )}
           </button>
+
+          <button
+            onClick={() => setGovernanceTab('stress_tests')}
+            className={`px-4 py-1.5 rounded-md text-xs font-bold font-sans transition-all cursor-pointer flex items-center gap-1.5 relative ${
+              governanceTab === 'stress_tests'
+                ? 'bg-zinc-900 text-purple-400 border border-purple-900/30 shadow'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5" /> ⚔️ Стресс-Тесты (Ред-Тиминг)
+          </button>
         </div>
 
         {governanceTab === 'dao' && (
@@ -456,7 +719,7 @@ export const GovernanceDaoHub: React.FC<GovernanceDaoHubProps> = ({
         )}
       </div>
 
-      {governanceTab === 'dao' ? (
+      {governanceTab === 'dao' && (
         <div className="space-y-4">
           <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/20 backdrop-blur leading-relaxed text-xs text-zinc-300 font-sans">
             <h3 className="font-bold text-zinc-100 flex items-center gap-1.5 mb-1 text-xs uppercase tracking-wider">
@@ -553,7 +816,9 @@ export const GovernanceDaoHub: React.FC<GovernanceDaoHubProps> = ({
             })}
           </div>
         </div>
-      ) : (
+      )}
+
+      {governanceTab === 'compliance' && (
         // AUDIT COMPLIANCE & PROTOCOL SECURITY VIEW (UPDATED MODULE WITH FINDINGS & REMEDIATIONS)
         <div className="space-y-5" id="contract-security-audit-report">
           
@@ -686,172 +951,448 @@ export const GovernanceDaoHub: React.FC<GovernanceDaoHubProps> = ({
           </div>
 
           {/* 10 Detailed Findings Section List */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-zinc-900 pb-2">
-              <h3 className="text-zinc-100 font-bold font-sans text-xs uppercase tracking-wider flex items-center gap-1.5">
-                <BadgeAlert className="w-4 h-4 text-rose-500" /> Ведомость выявления угроз и отладки
-              </h3>
-              
-              {/* Severity Filter Buttons */}
-              <div className="flex items-center gap-1 font-mono text-[10px]">
-                {(['all', 'critical', 'high', 'medium', 'low'] as const).map(sev => {
-                  const itemsCount = sev === 'all' 
-                    ? auditFindingsList.length 
-                    : auditFindingsList.filter(f => f.severity === sev).length;
+          {!showAdvancedSecurityLab ? (
+            <div className="p-5 rounded-xl border border-emerald-950/60 bg-zinc-950/25 backdrop-blur-md space-y-4" id="corporate-compliance-certificate">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-900 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <ShieldCheck className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white font-mono uppercase tracking-wider">
+                      Сертификат соответствия Symbiosis (SYM-SEC)
+                    </h3>
+                    <p className="text-[10.5px] text-zinc-400 font-sans mt-0.5">
+                      Криптографический аудит успешно завершен. Все уязвимости устранены и проверяются валидаторами под капотом.
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-emerald-950/30 text-emerald-400 border border-emerald-900/40 rounded-xl px-3 py-1.5 text-[10px] font-mono font-bold flex items-center gap-1.5 self-start md:self-auto uppercase tracking-wider">
+                  <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-ping"></span>
+                  <span>Аттестовано (Security Level AAA)</span>
+                </div>
+              </div>
+
+              {/* Security features running active in background grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] font-mono pt-1">
+                <div className="p-2.5 bg-black/40 border border-zinc-900/60 rounded-xl flex items-center gap-2 text-zinc-350">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>1. Замок реэнтерабельности</span>
+                </div>
+                <div className="p-2.5 bg-black/40 border border-zinc-900/60 rounded-xl flex items-center gap-2 text-zinc-350">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>2. PQ Falcon Verifier (0xF9)</span>
+                </div>
+                <div className="p-2.5 bg-black/40 border border-zinc-900/60 rounded-xl flex items-center gap-2 text-zinc-350">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>3. Inflation Deposit Guard</span>
+                </div>
+                <div className="p-2.5 bg-black/40 border border-zinc-900/60 rounded-xl flex items-center gap-2 text-zinc-350">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>4. Slashing Double-Sign Lock</span>
+                </div>
+                <div className="p-2.5 bg-black/40 border border-zinc-900/60 rounded-xl flex items-center gap-2 text-zinc-350">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>5. Gas Recycling Freeze</span>
+                </div>
+                <div className="p-2.5 bg-black/40 border border-zinc-900/60 rounded-xl flex items-center gap-2 text-zinc-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>6. Лимиты предложений</span>
+                </div>
+                <div className="p-2.5 bg-black/40 border border-zinc-900/60 rounded-xl flex items-center gap-2 text-zinc-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>7. Token Rescuing Control</span>
+                </div>
+                <div className="p-2.5 bg-black/40 border border-zinc-900/60 rounded-xl flex items-center gap-2 text-zinc-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>8. Защита от нулевого залога</span>
+                </div>
+                <div className="p-2.5 bg-black/40 border border-zinc-900/60 rounded-xl flex items-center gap-2 text-zinc-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>9. Иерархия привилегий ACL</span>
+                </div>
+              </div>
+
+              {/* Advanced mode expand action info trigger */}
+              <div className="p-4 bg-zinc-950 border border-zinc-900/80 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs leading-relaxed">
+                <div>
+                  <span className="font-bold text-zinc-200 block font-mono">🧪 Инженерный отладочный пульт</span>
+                  <p className="text-zinc-400 text-[10.5px] mt-0.5 font-sans">
+                    Для проведения тестов на проникновение, симуляции сетевых уязвимостей и инспекции уязвимого смарт-кода вы можете развернуть экспертную панель.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowAdvancedSecurityLab(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 hover:from-purple-900/40 hover:to-indigo-900/50 text-indigo-300 hover:text-indigo-200 font-mono font-bold text-[10.5px] border border-indigo-950 rounded-lg shrink-0 transition-all active:scale-95 cursor-pointer"
+                >
+                  Инженерная Лаборатория Угроз
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b border-zinc-900 pb-2">
+                <div className="flex items-center gap-2">
+                  <BadgeAlert className="w-4 h-4 text-rose-500 animate-pulse" />
+                  <h3 className="text-zinc-100 font-bold font-sans text-xs uppercase tracking-wider">
+                    Ведомость выявления угроз и отладки
+                  </h3>
+                </div>
+                
+                <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-1 font-mono text-[10px]">
+                    {(['all', 'critical', 'high', 'medium', 'low'] as const).map(sev => {
+                      const itemsCount = sev === 'all' 
+                        ? auditFindingsList.length 
+                        : auditFindingsList.filter(f => f.severity === sev).length;
+                      
+                      return (
+                        <button
+                          key={sev}
+                          onClick={() => setSeverityFilter(sev)}
+                          className={`px-2 py-0.5 rounded border transition-all cursor-pointer ${
+                            severityFilter === sev
+                              ? 'bg-zinc-900 text-purple-400 border-purple-900/50 font-bold'
+                              : 'text-zinc-500 border-transparent hover:text-zinc-300'
+                          }`}
+                        >
+                          {sev.toUpperCase()} ({itemsCount})
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => setShowAdvancedSecurityLab(false)}
+                    className="text-[9.5px] font-mono px-2 py-1 bg-red-950/20 hover:bg-red-950/40 text-red-400 border border-red-900/30 rounded cursor-pointer"
+                  >
+                    Скрыть Лабораторию
+                  </button>
+                </div>
+              </div>
+
+              {/* Finding Accordion Widgets */}
+              <div className="space-y-3">
+                {filteredFindings.map(finding => {
+                  const isPatched = patchedVulnerabilities[finding.id] || false;
+                  const isExpanded = expandedFinding === finding.id;
+
+                  const severityColors = {
+                    critical: 'border-red-900 bg-red-950/10 text-red-400 hover:bg-red-950/15',
+                    high: 'border-orange-900 bg-orange-950/10 text-orange-400 hover:bg-orange-950/15',
+                    medium: 'border-yellow-900 bg-yellow-950/10 text-yellow-450 hover:bg-yellow-950/15',
+                    low: 'border-blue-900 bg-blue-950/10 text-blue-400 hover:bg-blue-950/15'
+                  };
+
+                  return (
+                    <div 
+                      key={finding.id} 
+                      className={`border rounded-xl transition-all ${
+                        isPatched 
+                          ? 'border-emerald-900/50 bg-emerald-950/5' 
+                          : 'border-zinc-900 bg-zinc-950/30'
+                      }`}
+                    >
+                      
+                      {/* Header bar of Finding */}
+                      <div 
+                        onClick={() => setExpandedFinding(isExpanded ? null : finding.id)}
+                        className="p-3 flex items-center justify-between cursor-pointer hover:bg-zinc-950/20"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded border tracking-wide font-extrabold pb-1 pt-0.5 ${severityColors[finding.severity]}`}>
+                            {finding.severity}
+                          </span>
+                          
+                          <div>
+                            <h4 className="text-zinc-250 font-sans font-bold text-xs tracking-tight hover:text-zinc-100 transition-colors">
+                              {finding.title}
+                            </h4>
+                            <span className="text-[10px] text-zinc-500 font-mono">
+                              Локация: <code className="text-zinc-400">{finding.contract}</code>
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          {/* Patch Indicator Pin */}
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-[9.5px] font-mono px-2 py-1.5 rounded-md border font-bold flex items-center gap-1 ${
+                              isPatched 
+                                ? 'border-emerald-900/60 bg-emerald-950/20 text-emerald-400' 
+                                : 'border-rose-900/60 bg-rose-950/10 text-rose-400'
+                            }`}>
+                              {isPatched ? (
+                                <>
+                                  <Shield className="w-3 h-3 text-emerald-400 animate-pulse" /> Патч Активен
+                                </>
+                              ) : (
+                                <>
+                                  <Wrench className="w-3 h-3 text-rose-450" /> Требуется Патч
+                                </>
+                              )}
+                            </span>
+
+                            {onTogglePatch && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onTogglePatch(finding.id);
+                                }}
+                                className={`px-3 py-1.5 rounded font-mono text-[10px] border transition-all font-bold cursor-pointer flex items-center gap-1 ${
+                                  isPatched 
+                                    ? 'bg-zinc-900 text-rose-400 border-zinc-800 hover:bg-zinc-850 hover:text-rose-300' 
+                                    : 'bg-emerald-900/30 hover:bg-emerald-900/50 text-emerald-300 border-emerald-800'
+                                }`}
+                              >
+                                {isPatched ? 'Отключить' : 'Применить'}
+                              </button>
+                            )}
+                          </div>
+
+                          <ChevronRight className={`w-4 h-4 text-zinc-500 transition-transform duration-200 ${isExpanded ? 'transform rotate-90 text-zinc-200' : ''}`} />
+                        </div>
+                      </div>
+
+                      {/* Accordion Content Body of Finding */}
+                      {isExpanded && (
+                        <div className="px-4 pb-4 pt-2 border-t border-zinc-900/50 space-y-3.5 text-xs text-zinc-350 leading-relaxed font-sans">
+                          
+                          <p>{finding.description}</p>
+
+                          {/* Vulnerable vs Remediation Code Panels */}
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 font-mono text-[10px] pt-1">
+                            
+                            {/* Vulnerable container */}
+                            <div className="p-3 rounded-lg border border-red-950/60 bg-red-950/5 flex flex-col justify-between">
+                              <div>
+                                <div className="text-red-400 font-bold font-sans text-[10px] uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                                  <AlertOctagon className="w-3.5 h-3.5 text-red-400 shrink-0" /> Уязвимый исходный код:
+                                </div>
+                                <pre className="overflow-x-auto whitespace-pre p-2 rounded bg-black/50 custom-scrollbar text-red-300/80 max-h-[170px]">
+                                  {finding.codeVulnerable}
+                                </pre>
+                              </div>
+                            </div>
+
+                            {/* Patched container */}
+                            <div className="p-3 rounded-lg border border-emerald-950/60 bg-emerald-950/5 flex flex-col justify-between">
+                              <div>
+                                <div className="text-emerald-400 font-bold font-sans text-[10px] uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0 className='animate-pulse'" /> Решение в патче безопасности:
+                                </div>
+                                <pre className="overflow-x-auto whitespace-pre p-2 rounded bg-black/50 custom-scrollbar text-emerald-300/90 max-h-[170px]">
+                                  {finding.codePatched}
+                                </pre>
+                              </div>
+                            </div>
+
+                          </div>
+
+                          {/* Remediation Summary Box */}
+                          <div className="p-3 bg-zinc-950/40 border border-zinc-900/50 rounded-lg flex items-start gap-1.5 leading-relaxed text-[11px] text-zinc-400">
+                            <Cpu className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                            <p>
+                              <strong>Инженерное устранение:</strong> {finding.remediation}
+                            </p>
+                          </div>
+
+                        </div>
+                      )}
+
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {governanceTab === 'stress_tests' && (
+        <div className="space-y-5">
+          {/* Stress test introduction header */}
+          <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/20 backdrop-blur leading-relaxed text-xs text-zinc-350 font-sans">
+            <h3 className="font-bold text-zinc-100 flex items-center gap-1.5 mb-1 text-xs uppercase tracking-wider">
+              <Flame className="w-4 h-4 text-red-500 animate-pulse" /> Песочница Симуляции Стресс-Тестов и Атак (Red-Teaming Sandbox)
+            </h3>
+            <p>
+              Интерактивная среда для запуска хакерских атак и верификации смарт-контрактов в реальном времени. Включайте и отключайте патчи безопасности во вкладке <strong>«Ревизия & Безопасность»</strong>, чтобы увидеть, как криптографические барьеры и математический консенсус протокола блокируют реальные угрозы!
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Scenarios List Sidepane */}
+            <div className="lg:col-span-4 space-y-3">
+              <span className="text-zinc-500 block text-[10px] uppercase tracking-wider font-bold mb-1 font-sans">Сценарии Атак (S1-S6)</span>
+              <div className="flex flex-col gap-2">
+                {stressTestsList.map(scenario => {
+                  const isPatchedObj = patchedVulnerabilities[scenario.vulnId] || false;
+                  const isActive = selectedStressTest === scenario.id;
                   
                   return (
                     <button
-                      key={sev}
-                      onClick={() => setSeverityFilter(sev)}
-                      className={`px-2 py-1 rounded border transition-all cursor-pointer ${
-                        severityFilter === sev
-                          ? 'bg-zinc-900 text-purple-400 border-purple-900/50 font-bold'
-                          : 'text-zinc-500 border-transparent hover:text-zinc-300'
+                      key={scenario.id}
+                      onClick={() => {
+                        if (runningTest) return;
+                        setSelectedStressTest(scenario.id);
+                        setTestLogs([]);
+                        setTestOutcome('none');
+                        setTestProgress(0);
+                      }}
+                      disabled={runningTest}
+                      className={`w-full text-left p-3 rounded-xl border transition-all flex flex-col gap-1.5 cursor-pointer disabled:cursor-not-allowed ${
+                        isActive 
+                          ? 'border-red-900/50 bg-red-950/10 text-red-100 shadow-md shadow-red-950/10' 
+                          : 'border-zinc-900 bg-zinc-950/30 text-zinc-400 hover:text-zinc-200 hover:border-zinc-800'
                       }`}
                     >
-                      {sev.toUpperCase()} ({itemsCount})
+                      <div className="flex items-center justify-between w-full">
+                        <span className={`text-[11px] font-bold font-mono ${isActive ? 'text-red-400' : 'text-zinc-300'}`}>
+                          {scenario.id.toUpperCase()}: {scenario.id === 'slash_attack' ? 'Whistleblower Bounty' : scenario.id === 'signature_bypass' ? 'Falcon Bypass' : scenario.id === 'prover_takeover' ? 'Role Takeover' : scenario.id === 'inflation_attack' ? 'Inflation rounding' : scenario.id === 'gas_drain' ? 'Gasback drain' : 'CEI Reentrancy'}
+                        </span>
+                        <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-mono tracking-wider font-extrabold uppercase shrink-0 ${
+                          scenario.severity === 'critical' 
+                            ? 'bg-red-950/40 text-red-400 border border-red-900/40' 
+                            : 'bg-amber-950/40 text-amber-500 border border-amber-900/30'
+                        }`}>
+                          {scenario.severity}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-zinc-500 line-clamp-2 leading-relaxed">
+                        {scenario.objective}
+                      </p>
+                      <div className="flex items-center gap-1.5 pt-1 border-t border-zinc-900/30 text-[9.5px]">
+                        <span className="text-zinc-650 font-mono">Патч:</span>
+                        <span className={`flex items-center gap-0.5 font-bold ${isPatchedObj ? 'text-emerald-400' : 'text-rose-500'}`}>
+                          {isPatchedObj ? (
+                            <>
+                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> АКТИВЕН (Безопасно)
+                            </>
+                          ) : (
+                            <>
+                              <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> ВЫКЛЮЧЕН (Уязвимо)
+                            </>
+                          )}
+                        </span>
+                      </div>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Finding Accordion Widgets */}
-            <div className="space-y-3">
-              {filteredFindings.map(finding => {
-                const isPatched = patchedVulnerabilities[finding.id] || false;
-                const isExpanded = expandedFinding === finding.id;
+            {/* Selected Scenario Workspace & Interactive Terminal */}
+            <div className="lg:col-span-8 flex flex-col gap-4">
+              {/* Scenario Details Card */}
+              <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/40 space-y-3.5 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between border-b border-zinc-900 pb-2 mb-2">
+                    <div>
+                      <h4 className="text-zinc-150 font-bold text-xs uppercase tracking-wider">{stressTestsList.find(s => s.id === selectedStressTest)?.name}</h4>
+                      <p className="text-[10px] text-zinc-500 font-mono mt-0.5">Целевой Смарт-Контракт: <span className="text-purple-400 font-bold">{stressTestsList.find(s => s.id === selectedStressTest)?.contract}</span></p>
+                    </div>
+                  </div>
 
-                const severityColors = {
-                  critical: 'border-red-900 bg-red-950/10 text-red-400 hover:bg-red-950/15',
-                  high: 'border-orange-900 bg-orange-950/10 text-orange-400 hover:bg-orange-950/15',
-                  medium: 'border-yellow-900 bg-yellow-950/10 text-yellow-450 hover:bg-yellow-950/15',
-                  low: 'border-blue-900 bg-blue-950/10 text-blue-400 hover:bg-blue-950/15'
-                };
-
-                return (
-                  <div 
-                    key={finding.id} 
-                    className={`border rounded-xl transition-all ${
-                      isPatched 
-                        ? 'border-emerald-900/50 bg-emerald-950/5' 
-                        : 'border-zinc-900 bg-zinc-950/30'
-                    }`}
-                  >
-                    
-                    {/* Header bar of Finding */}
-                    <div 
-                      onClick={() => setExpandedFinding(isExpanded ? null : finding.id)}
-                      className="p-3 flex items-center justify-between cursor-pointer hover:bg-zinc-950/20"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded border tracking-wide font-extrabold pb-1 pt-0.5 ${severityColors[finding.severity]}`}>
-                          {finding.severity}
-                        </span>
-                        
-                        <div>
-                          <h4 className="text-zinc-250 font-sans font-bold text-xs tracking-tight hover:text-zinc-100 transition-colors">
-                            {finding.title}
-                          </h4>
-                          <span className="text-[10px] text-zinc-500 font-mono">
-                            Локация: <code className="text-zinc-400">{finding.contract}</code>
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        {/* Patch Indicator Pin */}
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-[9.5px] font-mono px-2 py-1.5 rounded-md border font-bold flex items-center gap-1 ${
-                            isPatched 
-                              ? 'border-emerald-900/60 bg-emerald-950/20 text-emerald-400' 
-                              : 'border-rose-900/60 bg-rose-950/10 text-rose-400'
-                          }`}>
-                            {isPatched ? (
-                              <>
-                                <Shield className="w-3 h-3 text-emerald-400 animate-pulse" /> Патч Активен
-                              </>
-                            ) : (
-                              <>
-                                <Wrench className="w-3 h-3 text-rose-450" /> Требуется Патч
-                              </>
-                            )}
-                          </span>
-
-                          {onTogglePatch && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onTogglePatch(finding.id);
-                              }}
-                              className={`px-3 py-1.5 rounded font-mono text-[10px] border transition-all font-bold cursor-pointer flex items-center gap-1 ${
-                                isPatched 
-                                  ? 'bg-zinc-900 text-rose-400 border-zinc-800 hover:bg-zinc-850 hover:text-rose-300' 
-                                  : 'bg-emerald-900/30 hover:bg-emerald-900/50 text-emerald-300 border-emerald-800'
-                              }`}
-                            >
-                              {isPatched ? 'Отключить' : 'Применить'}
-                            </button>
-                          )}
-                        </div>
-
-                        <ChevronRight className={`w-4 h-4 text-zinc-500 transition-transform duration-200 ${isExpanded ? 'transform rotate-90 text-zinc-200' : ''}`} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
+                    <div>
+                      <span className="text-zinc-500 text-[10px] block uppercase tracking-wider font-bold mb-1">Цель Взлома:</span>
+                      <p className="text-zinc-300 leading-relaxed text-[11px]">
+                        {stressTestsList.find(s => s.id === selectedStressTest)?.objective}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 text-[10px] block uppercase tracking-wider font-bold mb-1">Спецификация Атаки:</span>
+                      <div className="p-2 rounded bg-black/60 border border-red-950/30 font-mono text-[9.5px] text-red-400 max-h-[100px] overflow-y-auto w-full custom-scrollbar">
+                        <strong>Payload:</strong><br />
+                        {stressTestsList.find(s => s.id === selectedStressTest)?.payload}
                       </div>
                     </div>
-
-                    {/* Accordion Content Body of Finding */}
-                    {isExpanded && (
-                      <div className="px-4 pb-4 pt-2 border-t border-zinc-900/50 space-y-3.5 text-xs text-zinc-350 leading-relaxed font-sans">
-                        
-                        <p>{finding.description}</p>
-
-                        {/* Vulnerable vs Remediation Code Panels */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 font-mono text-[10px] pt-1">
-                          
-                          {/* Vulnerable container */}
-                          <div className="p-3 rounded-lg border border-red-950/60 bg-red-950/5 flex flex-col justify-between">
-                            <div>
-                              <div className="text-red-400 font-bold font-sans text-[10px] uppercase tracking-wide mb-1.5 flex items-center gap-1">
-                                <AlertOctagon className="w-3.5 h-3.5 text-red-400 shrink-0" /> Уязвимый исходный код:
-                              </div>
-                              <pre className="overflow-x-auto whitespace-pre p-2 rounded bg-black/50 custom-scrollbar text-red-300/80 max-h-[170px]">
-                                {finding.codeVulnerable}
-                              </pre>
-                            </div>
-                          </div>
-
-                          {/* Patched container */}
-                          <div className="p-3 rounded-lg border border-emerald-950/60 bg-emerald-950/5 flex flex-col justify-between">
-                            <div>
-                              <div className="text-emerald-400 font-bold font-sans text-[10px] uppercase tracking-wide mb-1.5 flex items-center gap-1">
-                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0 className='animate-pulse'" /> Решение в патче безопасности:
-                              </div>
-                              <pre className="overflow-x-auto whitespace-pre p-2 rounded bg-black/50 custom-scrollbar text-emerald-300/90 max-h-[170px]">
-                                {finding.codePatched}
-                              </pre>
-                            </div>
-                          </div>
-
-                        </div>
-
-                        {/* Remediation Summary Box */}
-                        <div className="p-3 bg-zinc-950/40 border border-zinc-900/50 rounded-lg flex items-start gap-1.5 leading-relaxed text-[11px] text-zinc-400">
-                          <Cpu className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-                          <p>
-                            <strong>Инженерное устранение:</strong> {finding.remediation}
-                          </p>
-                        </div>
-
-                      </div>
-                    )}
-
                   </div>
-                );
-              })}
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3.5 pt-3.5 border-t border-zinc-900/40">
+                  <button
+                    onClick={() => handleRunStressTest(selectedStressTest)}
+                    disabled={runningTest}
+                    className={`w-full sm:w-auto px-5 py-2 rounded-lg font-bold font-sans text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed ${
+                      runningTest 
+                        ? 'bg-zinc-900 text-zinc-500 border border-zinc-800' 
+                        : 'bg-red-950 hover:bg-red-900 border border-red-800 text-red-200 shadow-md hover:shadow-red-950/30'
+                    }`}
+                  >
+                    {runningTest ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-zinc-500" /> Симуляция Контракта...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3.5 h-3.5 text-red-400 shrink-0" /> ЗАПУСТИТЬ ОНЧЕЙН АТАКУ
+                      </>
+                    )}
+                  </button>
+
+                  {runningTest && (
+                    <div className="flex-1 w-full flex items-center gap-3">
+                      <div className="flex-1 bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
+                        <div 
+                          className="h-full bg-red-500 transition-all duration-300" 
+                          style={{ width: `${testProgress}%` }}
+                        />
+                      </div>
+                      <span className="font-mono text-[10px] text-zinc-400 whitespace-nowrap">{testProgress}%</span>
+                    </div>
+                  )}
+
+                  {!runningTest && testOutcome !== 'none' && (
+                    <span className={`text-xs font-bold font-sans ${testOutcome === 'success' ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
+                      {testOutcome === 'success' ? '💥 КОНТРАКТ ВЗЛОМАН!' : '🛡️ СИСТЕМА УСТОЯЛА!'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Terminal Logs Window */}
+              <div className="rounded-xl border border-zinc-900 bg-black overflow-hidden flex flex-col h-[280px]">
+                <div className="bg-zinc-950 border-b border-zinc-900 px-4 py-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+                    <span className="text-[10px] font-mono text-zinc-400 font-extrabold uppercase tracking-wide">EVM Execution & Telemetry Log</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500/80"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+                  </div>
+                </div>
+
+                <div className="p-4 font-mono text-[11px] text-zinc-400 space-y-1.5 overflow-y-auto flex-1 custom-scrollbar leading-relaxed bg-black/90">
+                  {testLogs.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-zinc-600 italic text-[10px] gap-1.5">
+                      <span>_ Ожидание запуска атакующего вектора... _</span>
+                      <span>Нажмите на красную кнопку для инициации транзакций</span>
+                    </div>
+                  ) : (
+                    testLogs.map((log, i) => {
+                      if (typeof log !== 'string') return null;
+                      let colorClass = "text-zinc-400";
+                      if (log.includes("🏆") || log.includes("🎉") || log.includes("SUCCESS")) colorClass = "text-emerald-400 font-extrabold";
+                      else if (log.includes("💥") || log.includes("ПРОВАЛЕН") || log.includes("🔥")) colorClass = "text-red-400 font-extrabold";
+                      else if (log.includes("🛡️") || log.includes("УСПЕШНО") || log.includes("ЗАЩИЩЕН")) colorClass = "text-emerald-400 font-extrabold";
+                      else if (log.includes("🛑") || log.includes("ОТКЛОНЕНА")) colorClass = "text-amber-400";
+                      
+                      return (
+                        <div key={i} className={`whitespace-pre-wrap border-l-2 pl-2 border-zinc-900 py-0.5 ${colorClass}`}>
+                          {log}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
             </div>
-
           </div>
-
         </div>
       )}
     </div>

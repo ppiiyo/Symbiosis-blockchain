@@ -604,6 +604,7 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
 
           <div className="p-4 flex-1 font-mono text-[10px] space-y-1.5 overflow-y-auto custom-scrollbar bg-black/90 text-zinc-300">
             {sdkLogs.map((log, index) => {
+              if (typeof log !== 'string') return null;
               let textClass = "text-zinc-300";
               if (log.includes("[SUCCESS]") || log.includes("[🎉 SDK")) {
                 textClass = "text-emerald-400 font-bold bg-emerald-950/10 p-1 rounded border border-emerald-900/20 my-1 block";

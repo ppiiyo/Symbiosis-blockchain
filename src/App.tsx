@@ -78,16 +78,16 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'network' | 'sepolia' | 'governance_dao' | 'tap_to_verify' | 'roadmap'>('network');
 
   const [patchedVulnerabilities, setPatchedVulnerabilities] = useState<{ [id: string]: boolean }>({
-    unrestricted_slashing: false,
-    mock_signature: false,
-    privilege_escalation: false,
-    first_depositor: false,
-    gas_recycling: false,
-    withdrawal_exit: false,
-    proposal_limits: false,
-    token_rescuing: false,
-    zero_governors: false,
-    reentrancy: false,
+    unrestricted_slashing: true,
+    mock_signature: true,
+    privilege_escalation: true,
+    first_depositor: true,
+    gas_recycling: true,
+    withdrawal_exit: true,
+    proposal_limits: true,
+    token_rescuing: true,
+    zero_governors: true,
+    reentrancy: true,
   });
 
   const handleTogglePatch = (id: string) => {
