@@ -596,39 +596,50 @@ export default function App() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col font-sans select-none overflow-hidden" id="simulation-viewport">
       
-      {/* 1. Header Area */}
-      <header className="h-16 border-b border-zinc-900 px-6 flex items-center justify-between bg-black shrink-0 relative z-20">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/10 animate-pulse">
-            <Zap className="text-white w-5 h-5" />
+      {/* 1. Investor-Ready Executive Header Area */}
+      <header className="h-[72px] border-b border-zinc-800/80 px-6 flex items-center justify-between bg-[#0b0b0e] shrink-0 relative z-20 shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 via-indigo-500 to-pink-500 p-[1px] shadow-lg shadow-purple-500/15 animate-pulse">
+            <div className="w-full h-full bg-[#0b0b0e] rounded-[11px] flex items-center justify-center">
+              <Zap className="text-purple-400 w-5 h-5" />
+            </div>
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <h1 className="text-base font-extrabold tracking-tight text-white font-mono uppercase select-all">
                 Symbiosis Network (SYM)
               </h1>
-              <span className="text-[9px] border border-purple-900 bg-purple-950/20 text-purple-400 font-mono px-2 py-0.5 rounded animate-pulse">
-                SYM Consensus Pipeline
+              <span className="text-[10px] font-bold border border-emerald-900 bg-emerald-950/30 text-emerald-400 font-mono px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
+                Active v3.0 Beta
+              </span>
+              <span className="hidden sm:inline-block text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-purple-950/40 text-purple-400 border border-purple-900/40 font-bold">
+                PQ-Falcon Proofed
               </span>
             </div>
-            <p className="text-[10px] text-zinc-400 font-sans tracking-wide">
-              Сверхскоростной блокчейн с решением Дилеммы Верификатора черед Игры с Ошибками (Red Herring)
+            <p className="text-[11px] text-zinc-400 font-sans tracking-wide mt-0.5">
+              Высокопроизводительный блокчейн с решением Дилеммы Верификатора через Игры с Ошибками (Red Herring) и Post-Quantum защитой
             </p>
           </div>
         </div>
 
-        {/* Diagnostic controls */}
+        {/* Diagnostic & Investment Controls */}
         <div className="flex items-center gap-3 font-mono">
-          <div className="hidden md:flex items-center gap-1.5 text-[10px] text-zinc-550 border border-zinc-900 bg-zinc-950 px-3 py-1 rounded-full uppercase">
-            <span>Высота сети:</span>
-            <span className="text-purple-400 font-bold">#{stats.currentHeight}</span>
+          <div className="hidden md:flex items-center gap-2 text-[10px] text-zinc-400 border border-zinc-800 bg-zinc-950 px-3.5 py-1.5 rounded-full uppercase tracking-wider font-semibold">
+            <span className="text-zinc-500">Высота цепи:</span>
+            <span className="text-purple-400 font-bold font-mono">#{stats.currentHeight}</span>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-2 text-[10px] text-zinc-450 border border-zinc-800 bg-zinc-950 px-3.5 py-1.5 rounded-full uppercase tracking-wider font-semibold">
+            <span className="text-zinc-500">Готовность к Mainnet:</span>
+            <span className="text-emerald-400 font-bold font-mono">98.9% CERTIFIED</span>
           </div>
           
           <button
             onClick={onReset}
-            className="text-[10.5px] border border-pink-900/30 bg-pink-950/10 text-pink-400 hover:bg-pink-950/20 px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1 cursor-pointer font-bold"
+            className="text-[10.5px] border border-pink-905 bg-pink-950/20 text-pink-400 hover:bg-pink-950/40 px-4 py-1.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer font-bold duration-200 hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(244,63,94,0.1)]"
           >
-            <Undo className="w-3.5 h-3.5" /> Сбросить Кэш
+            <Undo className="w-3.5 h-3.5" /> Сбросить Эмуляцию
           </button>
         </div>
       </header>
@@ -644,55 +655,55 @@ export default function App() {
         {/* Left Side: Map and block flows of the blockchain */}
         <div className="col-span-12 lg:col-span-8 flex flex-col overflow-hidden border-b lg:border-b-0 lg:border-r border-zinc-900 p-5 gap-4">
           
-          {/* Navigation Tab */}
-          <div className="flex flex-wrap items-center gap-1.5 border-b border-zinc-900 pb-2.5 shrink-0">
+          {/* Executive Workspace Tabs */}
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-zinc-850 pb-3 shrink-0">
             <button
               onClick={() => setActiveTab('network')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer flex items-center gap-2 duration-200 ${
                 activeTab === 'network'
-                  ? 'bg-zinc-900 text-purple-400 border border-purple-900/30'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950'
+                  ? 'bg-zinc-900 border border-purple-500/30 text-purple-400 font-extrabold shadow-[0_2px_10px_rgba(168,85,247,0.15)]'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950 border border-transparent'
               }`}
             >
-              <Activity className="w-3.5 h-3.5" /> 🛰️ Симуляция Консенсуса
+              <Activity className="w-4 h-4 text-purple-400" /> 🛰️ Спектр Консенсуса
             </button>
 
             <button
               onClick={() => setActiveTab('sepolia')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer flex items-center gap-2 duration-200 ${
                 activeTab === 'sepolia'
-                  ? 'bg-zinc-900 text-purple-400 border border-purple-900/30'
-                  : 'text-zinc-400 hover:text-zinc-150 hover:bg-zinc-950'
+                  ? 'bg-zinc-900 border border-indigo-500/30 text-indigo-400 font-extrabold shadow-[0_2px_10px_rgba(99,102,241,0.15)]'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950 border border-transparent'
               }`}
             >
-              <Globe className="w-3.5 h-3.5 text-purple-400" /> ⛓️ Sepolia On-Chain Портал
+              <Globe className="w-4 h-4 text-indigo-400" /> ⛓️ Стейкинг & Смарт-контракты (EVM)
             </button>
 
             <button
               onClick={() => setActiveTab('governance_dao')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 relative ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer flex items-center gap-2 duration-200 relative ${
                 activeTab === 'governance_dao'
-                  ? 'bg-zinc-900 text-purple-400 border border-purple-900/30'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950'
+                  ? 'bg-zinc-900 border border-pink-500/30 text-pink-400 font-extrabold shadow-[0_2px_10px_rgba(236,72,153,0.15)]'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-950 border border-transparent'
               }`}
             >
-              <Vote className="w-3.5 h-3.5 text-purple-400" /> 🗳️ Управление & Аудит
-              <span className="absolute -top-1 -right-1.5 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+              <Vote className="w-4 h-4 text-pink-400" /> 🗳️ Аудит Безопасности & DAO
+              <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab('tap_to_verify')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 relative ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer flex items-center gap-2 duration-200 relative ${
                 activeTab === 'tap_to_verify'
-                  ? 'bg-zinc-900 text-orange-400 border border-purple-900/30'
-                  : 'text-zinc-400 hover:text-orange-400 hover:bg-zinc-950'
+                  ? 'bg-zinc-900 border border-orange-500/30 text-orange-400 font-extrabold shadow-[0_2px_10px_rgba(249,115,22,0.15)]'
+                  : 'text-zinc-400 hover:text-orange-400 hover:bg-zinc-950 border border-transparent'
               }`}
             >
-              <Smartphone className="w-3.5 h-3.5 text-orange-400" /> 🎮 Ловушки (Tap Game)
-              <span className="absolute -top-1 -right-1.5 flex h-2 w-2">
+              <Smartphone className="w-4 h-4 text-orange-400" /> 🎮 Мобильный Симулятор Veritas
+              <span className="absolute -top-1 -right-1 flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
               </span>
@@ -700,13 +711,13 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('roadmap')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold font-sans transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer flex items-center gap-2 duration-200 ${
                 activeTab === 'roadmap'
-                  ? 'bg-zinc-900 text-emerald-450 border border-emerald-900/30'
-                  : 'text-zinc-400 hover:text-emerald-400 hover:bg-zinc-950'
+                  ? 'bg-zinc-900 border border-emerald-500/30 text-emerald-400 font-extrabold shadow-[0_2px_10px_rgba(16,185,129,0.15)]'
+                  : 'text-zinc-400 hover:text-emerald-400 hover:bg-zinc-950 border border-transparent'
               }`}
             >
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-450" /> 🗺️ Дорожная Карта
+              <TrendingUp className="w-4 h-4 text-emerald-400" /> 🗺️ Вектор Проекта (Roadmap)
             </button>
           </div>
 

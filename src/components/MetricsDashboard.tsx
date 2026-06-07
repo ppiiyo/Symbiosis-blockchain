@@ -33,110 +33,128 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ stats, chart
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full" id="stats-dashboard-grid">
       
       {/* Metric 1: TPS */}
-      <div className="bg-[#09090b] border border-zinc-900 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden">
+      <div className="bg-gradient-to-b from-[#121215] to-[#09090b] hover:from-[#16161a] hover:to-[#0b0b0e] border border-zinc-800/80 hover:border-zinc-700/80 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.6)] group h-[145px]">
+        {/* Subtle decorative mesh light glow on top right */}
+        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 rounded-full bg-emerald-500/5 blur-xl group-hover:bg-emerald-500/10 transition-all duration-500 pointer-events-none" />
+        
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-sans text-zinc-500 font-medium">Текущий TPS</span>
-          <TrendingUp className="w-4 h-4 text-emerald-500" />
+          <span className="text-xs font-sans text-zinc-400 font-medium">Текущая пропускная способность</span>
+          <TrendingUp className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
         </div>
         <div className="flex items-baseline gap-1.5 z-10">
-          <span className="text-2xl font-bold tracking-tight text-zinc-100 font-mono">
+          <span className="text-3xl font-extrabold tracking-tight text-white font-mono">
             {stats.realtimeTPS.toLocaleString()}
           </span>
-          <span className="text-xs text-zinc-500 font-sans">tx/sec</span>
+          <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500 font-bold">TPS</span>
         </div>
         
         {/* Real-time sparkline SVG */}
-        <div className="h-10 w-full mt-3 opacity-60">
+        <div className="h-10 w-full mt-2 opacity-70">
           <svg className="w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
             <path
               d={makeSvgPath('tps', 30, 100)}
               fill="none"
               stroke="#10b981"
-              strokeWidth="1.5"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </svg>
         </div>
       </div>
 
       {/* Metric 2: Latency */}
-      <div className="bg-[#09090b] border border-zinc-900 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden">
+      <div className="bg-gradient-to-b from-[#121215] to-[#09090b] hover:from-[#16161a] hover:to-[#0b0b0e] border border-zinc-800/80 hover:border-zinc-700/80 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.6)] group h-[145px]">
+        {/* Subtle decorative mesh light glow on top right */}
+        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 rounded-full bg-purple-500/5 blur-xl group-hover:bg-purple-500/10 transition-all duration-500 pointer-events-none" />
+        
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-sans text-zinc-500 font-medium">Финализация блоков</span>
-          <Clock className="w-4 h-4 text-purple-400" />
+          <span className="text-xs font-sans text-zinc-400 font-medium">Время финализации</span>
+          <Clock className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
         </div>
         <div className="flex items-baseline gap-1.5 z-10">
-          <span className="text-2xl font-bold tracking-tight text-zinc-100 font-mono">
+          <span className="text-3xl font-extrabold tracking-tight text-white font-mono">
             {stats.avgFinalityTimeMs.toFixed(0)}
           </span>
-          <span className="text-xs text-zinc-500 font-sans">мс</span>
+          <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500 font-bold">мс</span>
         </div>
 
         {/* Real-time sparkline SVG */}
-        <div className="h-10 w-full mt-3 opacity-60">
+        <div className="h-10 w-full mt-2 opacity-70">
           <svg className="w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
             <path
               d={makeSvgPath('latency', 30, 100)}
               fill="none"
               stroke="#a855f7"
-              strokeWidth="1.5"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </svg>
         </div>
       </div>
 
       {/* Metric 3: Diligence Ratio */}
-      <div className="bg-[#09090b] border border-zinc-900 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden">
+      <div className="bg-gradient-to-b from-[#121215] to-[#09090b] hover:from-[#16161a] hover:to-[#0b0b0e] border border-zinc-800/80 hover:border-zinc-700/80 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.6)] group h-[145px]">
+        {/* Subtle decorative mesh light glow on top right */}
+        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 rounded-full bg-amber-500/5 blur-xl group-hover:bg-amber-500/10 transition-all duration-500 pointer-events-none" />
+        
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-sans text-zinc-500 font-medium">Проверки узлов (Индекс усердия)</span>
+          <span className="text-xs font-sans text-zinc-400 font-medium">Аудит-активность (Diligence)</span>
           <Percent className="w-4 h-4 text-amber-500" />
         </div>
         <div className="flex items-baseline gap-1.5 z-10">
-          <span className="text-2xl font-bold tracking-tight text-zinc-100 font-mono">
+          <span className="text-3xl font-extrabold tracking-tight text-white font-mono">
             {Math.round(stats.diligenceIndex * 100)}%
           </span>
-          <span className="text-xs text-zinc-500 font-sans">сеть проверяет</span>
+          <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500 font-bold">усердие</span>
         </div>
 
         {/* Real-time sparkline SVG */}
-        <div className="h-10 w-full mt-3 opacity-60">
+        <div className="h-10 w-full mt-2 opacity-70">
           <svg className="w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
             <path
               d={makeSvgPath('diligence', 30, 100)}
               fill="none"
               stroke="#f59e0b"
-              strokeWidth="1.5"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </svg>
         </div>
       </div>
 
       {/* Metric 4: Security Heath Gauge */}
-      <div className="bg-[#09090b] border border-zinc-900 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden">
+      <div className="bg-gradient-to-b from-[#121215] to-[#09090b] hover:from-[#16161a] hover:to-[#0b0b0e] border border-zinc-800/80 hover:border-zinc-700/80 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.6)] group h-[145px]">
+        {/* Subtle decorative mesh light glow on top right */}
+        <div className={`absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 rounded-full blur-xl group-hover:opacity-100 opacity-60 transition-all duration-500 pointer-events-none ${isSecure ? 'bg-emerald-500/10' : 'bg-red-500/20 animate-pulse'}`} />
+        
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-sans text-zinc-500 font-medium">Безопасность системы</span>
+          <span className="text-xs font-sans text-zinc-400 font-medium">Состояние безопасности</span>
           {isSecure ? (
             <Shield className="w-4 h-4 text-emerald-400" />
           ) : (
             <ShieldAlert className="w-4 h-4 text-red-500 animate-pulse" />
           )}
         </div>
-        <div className="flex flex-col gap-1 mt-1 z-10">
-          <span className={`text-xl font-bold tracking-tight font-mono ${isSecure ? 'text-emerald-400' : 'text-red-500 animate-pulse'}`}>
-            {isSecure ? 'НАДЕЖНО' : 'УГРОЗА ВЗЛОМА'}
+        <div className="flex flex-col gap-0.5 mt-1 z-10">
+          <span className={`text-2xl font-extrabold tracking-tight font-mono ${isSecure ? 'text-emerald-400' : 'text-red-500 animate-pulse'}`}>
+            {isSecure ? 'SECURE_AAA' : 'RISK_DETECTED'}
           </span>
-          <span className="text-[10px] text-zinc-500 font-sans">
-            {isSecure ? 'Узлы мотивированы проверять' : 'Валидаторы ленятся'}
+          <span className="text-[10px] text-zinc-400 font-sans tracking-wide">
+            {isSecure ? 'Равновесие Нэша стабильно' : 'Валидаторы под угрозой лени'}
           </span>
         </div>
 
         {/* Budget stats */}
-        <div className="mt-2 pt-2 border-t border-zinc-900 flex justify-between items-center text-[10px] font-mono">
-          <div className="flex items-center gap-1 text-red-400">
+        <div className="mt-2.5 pt-2 border-t border-zinc-800/80 flex justify-between items-center text-[9px] font-mono tracking-wider">
+          <div className="flex items-center gap-1 text-red-400 font-semibold uppercase">
             <Coins className="w-3 h-3 text-red-500" />
-            <span>Срезано: {stats.totalTokensSlashed}</span>
+            <span>Срезано: {stats.totalTokensSlashed} SYM</span>
           </div>
-          <div className="text-emerald-400">
-            <span>Награды: {stats.totalRewardsDistributed}</span>
+          <div className="text-emerald-400 font-semibold uppercase">
+            <span>Эмиссия: {stats.totalRewardsDistributed} SYM</span>
           </div>
         </div>
       </div>
@@ -144,3 +162,4 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ stats, chart
     </div>
   );
 };
+

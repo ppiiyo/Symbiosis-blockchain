@@ -194,75 +194,73 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5" id="sepolia-dapp-hub">
       
       {/* LEFT SECTION: SMART CONTRACT DEPLOYMENTS & LIVE PLAYGROUND ACTIONS */}
-      <div className="lg:col-span-7 flex flex-col gap-4">
+      <div className="lg:col-span-7 flex flex-col gap-5">
         
         {/* CONTRACT STATUS BOARD */}
-        <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/40 relative overflow-hidden backdrop-blur-md">
-          <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2 select-none opacity-5">
-            <Globe className="w-48 h-48 text-purple-500" />
-          </div>
+        <div className="p-5 rounded-2xl border border-zinc-800/80 bg-gradient-to-br from-[#121215] to-[#09090b] relative overflow-hidden backdrop-blur-md shadow-lg shadow-black/80 group">
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all duration-500 pointer-events-none" />
           
-          <div className="flex items-center justify-between border-b border-zinc-900 pb-2.5 mb-3">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3 mb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
               </span>
-              <h2 className="text-sm font-extrabold tracking-tight text-white font-mono uppercase">
-                Реестр Контрактов Sepolia L2 Rollup
+              <h2 className="text-xs font-extrabold tracking-widest text-[#a855f7] font-mono uppercase">
+                Реестр смарт-контрактов Sepolia L2 Rollup
               </h2>
             </div>
             
-            <div className="flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-900 px-2.5 py-1 rounded-full border border-zinc-800">
-              <Globe className="w-3.5 h-3.5 text-purple-400" />
-              <span className="font-mono text-[10px]">sepolia-testnet</span>
+            <div className="flex items-center gap-1.5 text-xs text-zinc-300 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
+              <Globe className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="font-mono text-[9px] font-bold uppercase tracking-wider">sepolia-testnet</span>
             </div>
           </div>
 
-          <div className="space-y-2.5 font-mono text-[11px]">
+          <div className="space-y-3 font-mono text-[11px]">
             {/* Token */}
-            <div className="flex items-center justify-between p-2 rounded bg-black/60 border border-zinc-900/60 transition-colors hover:border-purple-900/30">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d10] border border-zinc-800/60 hover:border-indigo-500/30 transition-all duration-300 group/item">
               <div>
-                <span className="text-zinc-500 block text-[9px] uppercase tracking-wider">SYM Token Ledger (ERC-20)</span>
-                <span className="text-zinc-300 select-all">{deployedAddresses.token}</span>
+                <span className="text-zinc-500 block text-[9px] font-bold uppercase tracking-wider mb-1">SYM Token Ledger (ERC-20)</span>
+                <span className="text-zinc-300 select-all group-hover/item:text-indigo-300 transition-colors font-mono">{deployedAddresses.token}</span>
               </div>
               <a 
                 href={`https://sepolia.etherscan.io/address/${deployedAddresses.token}`}
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-[10px] text-purple-400 hover:text-purple-300 border border-purple-900/40 hover:bg-purple-950/20 px-2 py-1 rounded"
+                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all"
               >
                 Etherscan
               </a>
             </div>
 
             {/* sSYM Staking */}
-            <div className="flex items-center justify-between p-2 rounded bg-black/60 border border-zinc-900/60 transition-colors hover:border-purple-900/30">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d10] border border-zinc-800/60 hover:border-indigo-500/30 transition-all duration-300 group/item">
               <div>
-                <span className="text-zinc-500 block text-[9px] uppercase tracking-wider">Liquid Staking (sSYM) Pool</span>
-                <span className="text-zinc-300 select-all">{deployedAddresses.staking}</span>
+                <span className="text-zinc-500 block text-[9px] font-bold uppercase tracking-wider mb-1">Liquid Staking (sSYM) Pool</span>
+                <span className="text-zinc-300 select-all group-hover/item:text-indigo-300 transition-colors font-mono">{deployedAddresses.staking}</span>
               </div>
               <a 
                 href={`https://sepolia.etherscan.io/address/${deployedAddresses.staking}`}
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-[10px] text-purple-400 hover:text-purple-300 border border-purple-900/40 hover:bg-purple-950/20 px-2 py-1 rounded"
+                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all"
               >
                 Etherscan
               </a>
             </div>
 
             {/* Nash Consensus */}
-            <div className="flex items-center justify-between p-2 rounded bg-black/60 border border-zinc-900/60 transition-colors hover:border-purple-900/30">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d10] border border-zinc-800/60 hover:border-indigo-500/30 transition-all duration-300 group/item">
               <div>
-                <span className="text-zinc-500 block text-[9px] uppercase tracking-wider">Nash Consensus Signature Registry</span>
-                <span className="text-zinc-300 select-all">{deployedAddresses.consensus}</span>
+                <span className="text-zinc-500 block text-[9px] font-bold uppercase tracking-wider mb-1">Nash Consensus Signature Registry</span>
+                <span className="text-zinc-300 select-all group-hover/item:text-indigo-300 transition-colors font-mono">{deployedAddresses.consensus}</span>
               </div>
               <a 
                 href={`https://sepolia.etherscan.io/address/${deployedAddresses.consensus}`}
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-[10px] text-purple-400 hover:text-purple-300 border border-purple-900/40 hover:bg-purple-950/20 px-2 py-1 rounded"
+                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all"
               >
                 Etherscan
               </a>
@@ -271,39 +269,39 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
         </div>
 
         {/* OPERATIONS PLAYGROUND */}
-        <div className="border border-zinc-900 bg-black/40 rounded-xl overflow-hidden flex flex-col min-h-[380px]">
+        <div className="border border-zinc-800/80 bg-gradient-to-b from-[#121215] to-[#09090b] rounded-2xl overflow-hidden flex flex-col min-h-[380px] shadow-lg shadow-black/80">
           
           {/* Navigation Controls bar */}
-          <div className="grid grid-cols-3 border-b border-zinc-900 bg-zinc-950/80 p-1">
+          <div className="grid grid-cols-3 border-b border-zinc-850 bg-zinc-950/90 p-1.5 gap-1 shrink-0">
             <button
               onClick={() => setActiveSubTab('stake')}
-              className={`py-2 text-xs font-bold font-sans transition-all cursor-pointer flex items-center justify-center gap-1.5 rounded-lg ${
+              className={`py-2 text-[10.5px] font-bold font-sans tracking-wide transition-all cursor-pointer flex items-center justify-center gap-1.5 rounded-lg ${
                 activeSubTab === 'stake'
-                  ? 'bg-zinc-900 text-purple-400 border border-purple-900/30 shadow-inner'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-zinc-900 text-indigo-400 border border-zinc-800 shadow-inner font-extrabold'
+                  : 'text-zinc-400 hover:text-zinc-250 border border-transparent'
               }`}
             >
-              <Coins className="w-3.5 h-3.5" /> Ликвидный Стейкинг (sSYM)
+              <Coins className="w-3.5 h-3.5 text-indigo-400" /> Ликвидный стейкинг (sSYM)
             </button>
             <button
               onClick={() => setActiveSubTab('register_validator')}
-              className={`py-2 text-xs font-bold font-sans transition-all cursor-pointer flex items-center justify-center gap-1.5 rounded-lg ${
+              className={`py-2 text-[10.5px] font-bold font-sans tracking-wide transition-all cursor-pointer flex items-center justify-center gap-1.5 rounded-lg ${
                 activeSubTab === 'register_validator'
-                  ? 'bg-zinc-900 text-purple-400 border border-purple-900/30'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-zinc-900 text-indigo-400 border border-zinc-800 font-extrabold'
+                  : 'text-zinc-400 hover:text-zinc-250 border border-transparent'
               }`}
             >
-              <Key className="w-3.5 h-3.5" /> Пост-Квантовый Реестр
+              <Key className="w-3.5 h-3.5 text-indigo-400" /> Пост-квантовый реестр
             </button>
             <button
               onClick={() => setActiveSubTab('lazy_slashing')}
-              className={`py-2 text-xs font-bold font-sans transition-all cursor-pointer flex items-center justify-center gap-1.5 rounded-lg relative ${
+              className={`py-2 text-[10.5px] font-bold font-sans tracking-wide transition-all cursor-pointer flex items-center justify-center gap-1.5 rounded-lg relative ${
                 activeSubTab === 'lazy_slashing'
-                  ? 'bg-zinc-900 text-purple-400 border border-purple-900/30'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-zinc-900 text-indigo-400 border border-zinc-800 font-extrabold'
+                  : 'text-zinc-400 hover:text-zinc-250 border border-transparent'
               }`}
             >
-              <ShieldAlert className="w-3.5 h-3.5 text-pink-400" /> Слэшинг Ленивых
+              <ShieldAlert className="w-3.5 h-3.5 text-pink-400" /> Слэшинг ленивых
               <span className="absolute -top-1 -right-0.5 flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-pink-500"></span>
@@ -316,11 +314,11 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
             {activeSubTab === 'stake' && (
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="bg-purple-950/20 text-purple-400 p-2 rounded-lg border border-purple-900/30 shrink-0">
-                    <ArrowRightLeft className="w-5 h-5" />
+                  <div className="bg-indigo-950/20 text-indigo-400 p-2.5 rounded-lg border border-indigo-900/30 shrink-0">
+                    <ArrowRightLeft className="w-5 h-5 animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-zinc-100 font-bold font-sans text-xs">Ликвидное Делегирование SYM за sSYM акции</h3>
+                    <h3 className="text-zinc-150 font-bold font-sans text-xs">Ликвидное Делегирование SYM за sSYM акции</h3>
                     <p className="text-[10.5px] text-zinc-400 font-sans mt-0.5 leading-relaxed">
                       Инвестируйте свободные токены SYM в пул для автоматического начисления долей. Вы моментально получаете ликвидный токен sSYM, который можно использовать в управлении DAO!
                     </p>
@@ -328,19 +326,21 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
                 </div>
 
                 <div className="grid grid-cols-2 gap-3.5 pt-1.5">
-                  <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-4">
-                    <span className="text-[9.5px] text-zinc-500 block font-mono">Ваш свободный баланс</span>
-                    <div className="text-zinc-100 font-extrabold text-sm font-mono mt-0.5">
-                      {userBalance.toLocaleString()} <span className="text-purple-400">SYM</span>
+                  <div className="bg-[#0b0b0d] border border-zinc-850 rounded-xl p-4 transition-all hover:bg-zinc-950 hover:border-zinc-800">
+                    <span className="text-[9.5px] text-zinc-500 block font-mono font-bold uppercase">Ваш свободный баланс</span>
+                    <div className="text-white font-extrabold text-lg font-mono mt-0.5">
+                      {userBalance.toLocaleString()} <span className="text-indigo-400 text-sm">SYM</span>
                     </div>
                   </div>
-                  <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-4 text-right">
-                    <span className="text-[9.5px] text-zinc-500 block font-mono">Делегировано в пул sSYM</span>
-                    <div className="text-zinc-100 font-extrabold text-sm font-mono mt-0.5">
-                      {(userStakedNodes['pool-ssym'] || 0).toLocaleString()} <span className="text-pink-400">sSYM</span>
+                  <div className="bg-[#0b0b0d] border border-zinc-850 rounded-xl p-4 text-right transition-all hover:bg-zinc-950 hover:border-zinc-800">
+                    <span className="text-[9.5px] text-zinc-500 block font-mono font-bold uppercase">Делегировано в пул sSYM</span>
+                    <div className="text-white font-extrabold text-lg font-mono mt-0.5">
+                      {(userStakedNodes['pool-ssym'] || 0).toLocaleString()} <span className="text-pink-400 text-sm">sSYM</span>
                     </div>
                   </div>
                 </div>
+
+
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   {/* Left Column: Stake SYM */}
