@@ -347,8 +347,8 @@
       ]
     },
     "/app/applet/contracts/NashConsensusRegistry.sol": {
-      "lastModificationDate": 1780855348212,
-      "contentHash": "34d2ef8cce6e3bbdf4fdc51a0c027f9a",
+      "lastModificationDate": 1780855920152,
+      "contentHash": "4c0acbbc0c6229a05a88c8d979eaa9e3",
       "sourceName": "contracts/NashConsensusRegistry.sol",
       "solcConfig": {
         "version": "0.8.24",

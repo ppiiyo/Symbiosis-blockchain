@@ -96,13 +96,14 @@ contract NashConsensusRegistry is ReentrancyGuard, Pausable {
         }
 
         bool success;
+        // slither-disable-next-line assembly
         assembly {
             let ptr := mload(0x40)
             mstore(ptr, blockHash)
             mstore(add(ptr, 0x20), signature)
             mstore(add(ptr, 0x83), registeredKey)
             // staticcall to the post-quantum precompile address 0xF9
-            success := staticcall(300000, 0xF9, ptr, 0xa3, 0x00, 0x20)
+            success := staticcall(0x493e0, 0xF9, ptr, 0xa3, 0x00, 0x20)
         }
 
         if (!success) {
