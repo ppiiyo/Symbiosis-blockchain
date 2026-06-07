@@ -33,6 +33,7 @@ contract NashConsensusRegistry is ReentrancyGuard {
     event NodeSlashed(address indexed node, uint256 slashedAmount, string reason);
 
     constructor(address _symToken) {
+        require(_symToken != address(0), "Invalid token address");
         symToken = SymbiosisToken(_symToken);
     }
 
@@ -89,11 +90,11 @@ contract NashConsensusRegistry is ReentrancyGuard {
     function triggerLazySlashing(
         address guiltyNode,
         address whistleblower,
-        uint256 blockNumber,
-        bytes32 blockHash1,
-        bytes calldata sig1,
-        bytes32 blockHash2,
-        bytes calldata sig2
+        uint256 /* blockNumber */,
+        bytes32 /* blockHash1 */,
+        bytes calldata /* sig1 */,
+        bytes32 /* blockHash2 */,
+        bytes calldata /* sig2 */
     ) external nonReentrant {
         ValidatorNode storage v = validators[guiltyNode];
         require(!v.isSlashed, "Node is already slashed");
