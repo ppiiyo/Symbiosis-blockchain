@@ -44,8 +44,8 @@
       ]
     },
     "/app/applet/contracts/SymbiosisToken.sol": {
-      "lastModificationDate": 1780870301380,
-      "contentHash": "5adab14f4b203580170f6db47cb0ea23",
+      "lastModificationDate": 1780871071497,
+      "contentHash": "f798959f17e27c6540b775b1bc54ecba",
       "sourceName": "contracts/SymbiosisToken.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -348,8 +348,8 @@
       ]
     },
     "/app/applet/contracts/NashConsensusRegistry.sol": {
-      "lastModificationDate": 1780870333527,
-      "contentHash": "c1b7c8ed1662523d4fcf7f4fb8260517",
+      "lastModificationDate": 1780871129194,
+      "contentHash": "fe5b30ee572a91ca5ecfa96d876c4af5",
       "sourceName": "contracts/NashConsensusRegistry.sol",
       "solcConfig": {
         "version": "0.8.24",

@@ -445,4 +445,103 @@ describe("Symbiosis Protocol Test Suite", function () {
       expect(valInfo.stakedAmount).to.equal(initialStake);
     });
   });
+
+  describe("7. Additional Modern Security & Parameter Auditing Checks", function () {
+    it("Should prevent invalid governance parameters out of range", async function () {
+      // 1. Slash penalty out of range
+      await expect(
+        consensus.connect(owner).setSlashPenaltyPercent(2)
+      ).to.be.revertedWith("Slash penalty out of range");
+
+      await expect(
+        consensus.connect(owner).setSlashPenaltyPercent(51)
+      ).to.be.revertedWith("Slash penalty out of range");
+
+      // 2. Unbonding period out of range
+      await expect(
+        consensus.connect(owner).setUnbondingPeriod(0)
+      ).to.be.revertedWith("Unbonding period out of range");
+
+      // 3. Propose action checks
+      await expect(
+        symToken.connect(owner).proposeAction("setGasBackPercentage", "0x0000000000000000000000000000000000000065") // 101%
+      ).to.be.revertedWith("Gas back percentage too high");
+
+      await expect(
+        symToken.connect(owner).proposeAction("setTimelockDelay", "0x0000000000000000000000000000000000000000") // 0 delay
+      ).to.be.revertedWith("Invalid timelock delay range");
+    });
+
+    it("Should enforce proposalId bounds check in voting and execution", async function () {
+      await expect(
+        symToken.connect(owner).voteProposal(99)
+      ).to.be.revertedWith("Invalid proposal ID");
+
+      await expect(
+        symToken.connect(owner).executeProposal(99)
+      ).to.be.revertedWith("Invalid proposal ID");
+    });
+
+    it("Should support pausing with Uniswap/DeFi escape whitelisting compatibility", async function () {
+      const transferAmount = ethers.parseEther("10");
+      await symToken.transfer(user.address, transferAmount);
+
+      // Pause token
+      await symToken.connect(owner).pause();
+
+      // Normal user transfers must revert when token is paused
+      await expect(
+        symToken.connect(user).transfer(externalUser.address, ethers.parseEther("1"))
+      ).to.be.revertedWith("Token transfer is paused");
+
+      // Governor whitelists user
+      await symToken.connect(owner).setWhitelistedContract(user.address, true);
+
+      // Whitelisted user can now transfer even when paused
+      await symToken.connect(user).transfer(externalUser.address, ethers.parseEther("1"));
+      expect(await symToken.balanceOf(externalUser.address)).to.equal(ethers.parseEther("1"));
+
+      // Unpause token
+      await symToken.connect(owner).unpause();
+    });
+
+    it("Should enforce reward accrual and prevent unauthorized claim drainages", async function () {
+      // Set consensus registry address in token contract via DAO Proposal
+      const consensusAddr = await consensus.getAddress();
+      await symToken.connect(owner).proposeAction("setConsensusRegistry", consensusAddr);
+      await symToken.connect(gov2Signer).voteProposal(0);
+      await ethers.provider.send("evm_increaseTime", [24 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine");
+      await symToken.connect(owner).executeProposal(0);
+
+      // Register validator
+      const initialStake = ethers.parseEther("100");
+      await symToken.transfer(validator.address, initialStake);
+      await symToken.connect(validator).approve(consensusAddr, initialStake);
+      const fakeFalconPubKey = ethers.hexlify(ethers.randomBytes(32));
+      await consensus.connect(validator).registerValidator(initialStake, fakeFalconPubKey);
+
+      // Try claiming rewards without verifying blocks (fails because accumulated is 0)
+      await expect(
+        consensus.connect(validator).claimValidatorRewards(ethers.parseEther("5"))
+      ).to.be.revertedWith("Exceeds accumulated rewards");
+
+      // Verify 2 blocks -> earns 10 SYM (2 * 5)
+      await consensus.connect(validator).submitBlockVerification(2);
+
+      const maxClaim = await consensus.accumulatedRewards(validator.address);
+      expect(maxClaim).to.equal(ethers.parseEther("10"));
+
+      // Claim some rewards (succeeds)
+      const prevBal = await symToken.balanceOf(validator.address);
+      await consensus.connect(validator).claimValidatorRewards(ethers.parseEther("5"));
+      const postBal = await symToken.balanceOf(validator.address);
+      expect(postBal - prevBal).to.equal(ethers.parseEther("5"));
+
+      // Attempt to double claim or claim too much (fails)
+      await expect(
+        consensus.connect(validator).claimValidatorRewards(ethers.parseEther("10"))
+      ).to.be.revertedWith("Exceeds accumulated rewards");
+    });
+  });
 });

@@ -19,6 +19,7 @@ contract SymbiosisToken is ERC20, ERC20Burnable, Pausable {
 
     address[] public governors;
     mapping(address => bool) public isGovernor;
+    mapping(address => bool) public whitelistedContracts;
 
     struct Proposal {
         string actionType;
@@ -68,10 +69,23 @@ contract SymbiosisToken is ERC20, ERC20Burnable, Pausable {
         _unpause();
     }
 
+    function setWhitelistedContract(address contractAddr, bool status) external onlyGovernor {
+        whitelistedContracts[contractAddr] = status;
+    }
+
     function proposeAction(
         string memory actionType,
         address target
     ) external onlyGovernor whenNotPaused returns (uint256) {
+        bytes32 actionHash = keccak256(bytes(actionType));
+        if (actionHash == keccak256(bytes("setGasBackPercentage"))) {
+            uint256 newVal = uint256(uint160(target));
+            require(newVal <= 100, "Gas back percentage too high");
+        } else if (actionHash == keccak256(bytes("setTimelockDelay"))) {
+            uint256 newVal = uint256(uint160(target));
+            require(newVal >= 1 hours && newVal <= 30 days, "Invalid timelock delay range");
+        }
+
         uint256 eta = block.timestamp + timelockDelay;
         proposals.push(
             Proposal({
@@ -90,6 +104,7 @@ contract SymbiosisToken is ERC20, ERC20Burnable, Pausable {
     }
 
     function voteProposal(uint256 proposalId) external onlyGovernor whenNotPaused {
+        require(proposalId < proposals.length, "Invalid proposal ID");
         Proposal storage prop = proposals[proposalId];
         require(!prop.executed, "Proposal already executed");
         require(block.timestamp < prop.eta, "Voting period has ended"); // Fixed V-05
@@ -102,6 +117,7 @@ contract SymbiosisToken is ERC20, ERC20Burnable, Pausable {
     }
 
     function executeProposal(uint256 proposalId) external onlyGovernor whenNotPaused {
+        require(proposalId < proposals.length, "Invalid proposal ID");
         Proposal storage prop = proposals[proposalId];
         require(!prop.executed, "Proposal already executed");
         require(block.timestamp >= prop.eta, "Timelock delay is not over yet");
@@ -120,9 +136,13 @@ contract SymbiosisToken is ERC20, ERC20Burnable, Pausable {
         } else if (actionHash == keccak256(bytes("updateGovernor"))) {
             isGovernor[prop.targetAddress] = !isGovernor[prop.targetAddress];
         } else if (actionHash == keccak256(bytes("setGasBackPercentage"))) {
-            gasBackPercentage = uint256(uint160(prop.targetAddress));
+            uint256 newVal = uint256(uint160(prop.targetAddress));
+            require(newVal <= 100, "Gas back percentage too high");
+            gasBackPercentage = newVal;
         } else if (actionHash == keccak256(bytes("setTimelockDelay"))) {
-            timelockDelay = uint256(uint160(prop.targetAddress));
+            uint256 newVal = uint256(uint160(prop.targetAddress));
+            require(newVal >= 1 hours && newVal <= 30 days, "Invalid timelock delay range");
+            timelockDelay = newVal;
         } else {
             revert("Unknown action type");
         }
@@ -152,12 +172,18 @@ contract SymbiosisToken is ERC20, ERC20Burnable, Pausable {
         emit RewardsClaimed(validator, rewardAmount);
     }
 
-    /// @notice Pause transfer overrides (A-06)
-    function transfer(address to, uint256 value) public override whenNotPaused returns (bool) {
+    /// @notice Non-restrictive transfer with whitelist override during pause (NEW-MEDIUM-02)
+    function transfer(address to, uint256 value) public override returns (bool) {
+        if (paused()) {
+            require(whitelistedContracts[msg.sender] || whitelistedContracts[to], "Token transfer is paused");
+        }
         return super.transfer(to, value);
     }
 
-    function transferFrom(address from, address to, uint256 value) public override whenNotPaused returns (bool) {
+    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+        if (paused()) {
+            require(whitelistedContracts[msg.sender] || whitelistedContracts[to] || whitelistedContracts[from], "Token transfer is paused");
+        }
         return super.transferFrom(from, to, value);
     }
 }
