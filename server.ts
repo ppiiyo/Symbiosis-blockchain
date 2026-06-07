@@ -473,17 +473,17 @@ app.post('/api/deploy-testnet', (req, res) => {
 Compiled 11 Solidity files successfully (evm target: paris).
 
 ✅ [1/4] Contract 'SymbiosisToken' успешно развернут!
-   -> Адрес: 0x5fCb928B36Ec986E039aE99Fd3eCeCE87fD35cdE
+   -> Адрес: 0x5FbDB2315678afecb367f032d93F642f64180aa3
    -> Хэш транзакции: 0x39a1fe18c1f3089d89ab56c1c9b36C186039aE99Fd3eD
    -> Использовано газа: 1,842,501 (Цена: 14 Gwei, Итого: 0.02579 ETH)
 
 ✅ [2/4] Contract 'LiquidStakingSsym' успешно развернут!
-   -> Адрес: 0x7dEAc22239aE99Fdf96e3860399bd58fa996e343
+   -> Адрес: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
    -> Хэш транзакции: 0x89ab1fe18c1f3089daef76123deac1109bc4cf6bc071d1e4
    -> Использовано газа: 1,452,190 (Цена: 14 Gwei, Итого: 0.02033 ETH)
 
 ✅ [3/4] Contract 'NashConsensusRegistry' успешно развернут!
-   -> Адрес: 0x12Ca22239aE99Fdf96e3860399bd58fa996e3439e
+   -> Адрес: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
    -> Хэш транзакции: 0xbbca957da48646aebd14ef17cf99d7d242ef56a11283d58f
    -> Использовано газа: 1,922,015 (Цена: 14 Gwei, Итого: 0.02691 ETH)
 
@@ -621,9 +621,9 @@ app.post('/api/sdk-call', async (req, res) => {
   executionLogs.push(`[SDK] Инициализация SymbiosisSDK с провайдером JsonRpcProvider...`);
 
   const config = {
-    tokenAddress: tokenAddress || "0xF68a6e6401b41BeDb50f9b99A8022a4c7fc94675",
-    stakingAddress: stakingAddress || "0xb136B71C5213a6367c6B78E22762159A0C7d9582",
-    consensusAddress: consensusAddress || "0xcA37EB02242307735371fA07CA8970c114cF62bF"
+    tokenAddress: tokenAddress || "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    stakingAddress: stakingAddress || "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    consensusAddress: consensusAddress || "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
   };
 
   if (!hardhatNodeProcess) {

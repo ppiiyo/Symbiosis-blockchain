@@ -158,9 +158,9 @@ export class SymbiosisSDK {
   constructor(
     providerOrSigner: ethers.Provider | ethers.Signer,
     config: SDKConfig = {
-      tokenAddress: "0x5fCb928B36Ec986E039aE99Fd3eCeCE87fD35cdE",
-      stakingAddress: "0x7dEAc22239aE99Fdf96e3860399bd58fa996e343",
-      consensusAddress: "0x12Ca22239aE99Fdf96e3860399bd58fa996e3439e",
+      tokenAddress: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      stakingAddress: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      consensusAddress: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
     }
   ) {
     this.providerOrSigner = providerOrSigner;
