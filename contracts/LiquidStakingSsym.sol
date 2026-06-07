@@ -46,9 +46,9 @@ contract LiquidStakingSsym is ERC20, ReentrancyGuard {
         uint256 totalSym = symToken.balanceOf(address(this));
 
         uint256 sharesToMint;
-        // slither-disable-next-line incorrect-equality
-        if (totalShares == 0 || totalSym == 0) {
-            sharesToMint = amount;
+        if (totalShares == 0) {
+            _mint(address(0x000000000000000000000000000000000000dEaD), 1000);
+            sharesToMint = amount - 1000;
         } else {
             sharesToMint = (amount * totalShares) / totalSym;
         }

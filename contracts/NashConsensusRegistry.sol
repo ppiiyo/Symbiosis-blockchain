@@ -26,6 +26,8 @@ contract NashConsensusRegistry is ReentrancyGuard {
     mapping(address => ValidatorNode) public validators;
     uint256 public constant SLASH_PENALTY_PERCENT = 15;
     mapping(address => bytes) public falconPublicKeys;
+    mapping(address => uint256) public unbondingEta;
+    uint256 public constant UNBONDING_PERIOD = 24 hours;
 
     event ValidatorRegistered(address indexed node, uint256 initialStake);
     event NodeSlashed(address indexed node, uint256 slashedAmount, string reason);
@@ -87,7 +89,11 @@ contract NashConsensusRegistry is ReentrancyGuard {
     function triggerLazySlashing(
         address guiltyNode,
         address whistleblower,
-        uint256 /* blockNumber */
+        uint256 blockNumber,
+        bytes32 blockHash1,
+        bytes calldata sig1,
+        bytes32 blockHash2,
+        bytes calldata sig2
     ) external nonReentrant {
         ValidatorNode storage v = validators[guiltyNode];
         require(!v.isSlashed, "Node is already slashed");
@@ -105,5 +111,27 @@ contract NashConsensusRegistry is ReentrancyGuard {
         // INTERACTIONS
         symToken.burn(penalty / 2);
         IERC20(address(symToken)).safeTransfer(whistleblower, penalty / 2);
+    }
+
+    /// @notice Initiates standard unbonding / exit mechanism for validator nodes
+    function initiateValidatorExit() external nonReentrant {
+        require(validators[msg.sender].stakedAmount > 0, "Not a validator or no stake");
+        unbondingEta[msg.sender] = block.timestamp + UNBONDING_PERIOD;
+    }
+
+    /// @notice Withdraws validator collateral after custom security unbonding delay
+    function withdrawValidatorStake() external nonReentrant {
+        uint256 eta = unbondingEta[msg.sender];
+        require(eta > 0, "Exit not initiated");
+        require(block.timestamp >= eta, "Unbonding period active");
+
+        ValidatorNode storage v = validators[msg.sender];
+        uint256 stakeAmount = v.stakedAmount;
+        require(stakeAmount > 0, "No stake to withdraw");
+
+        v.stakedAmount = 0;
+        unbondingEta[msg.sender] = 0;
+
+        IERC20(address(symToken)).safeTransfer(msg.sender, stakeAmount);
     }
 }
