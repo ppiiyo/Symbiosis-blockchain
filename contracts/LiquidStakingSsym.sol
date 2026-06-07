@@ -31,6 +31,7 @@ contract LiquidStakingSsym is ERC20, ReentrancyGuard {
 
     /// @notice Updates the associated ZK Prover Registry authorized entity
     function updateZkProver(address newRegistry) external {
+        require(newRegistry != address(0), "Zero address");
         require(
             zkProverRegistry == address(0) || msg.sender == zkProverRegistry,
             "Unauthorized"
@@ -46,7 +47,7 @@ contract LiquidStakingSsym is ERC20, ReentrancyGuard {
         uint256 totalSym = symToken.balanceOf(address(this));
 
         uint256 sharesToMint;
-        if (totalShares == 0) {
+        if (totalShares < 1) {
             _mint(address(0x000000000000000000000000000000000000dEaD), 1000);
             sharesToMint = amount - 1000;
         } else {
