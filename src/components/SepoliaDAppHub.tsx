@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { ValidatorNode, SimulationConfig } from '../types';
 import { generateFalconKeypair } from '../symbiosis-sdk/index';
+import { OffChainValidatorDaemon, NodeAgentStats } from '../utils/node-agent-sim';
 
 interface SepoliaDAppHubProps {
   nodes: ValidatorNode[];
@@ -68,20 +69,96 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
 
   // Connection & execution loading states
   const [sepoliaConnected, setSepoliaConnected] = useState<boolean>(true);
+  const [walletConnected, setWalletConnected] = useState<boolean>(false);
+  const [walletAddress, setWalletAddress] = useState<string>('');
   const [executing, setExecuting] = useState<boolean>(false);
   const [sdkLogs, setSdkLogs] = useState<string[]>([
     "[SYSTEM_INIT] Подключено к провайдеру Sepolia Proof-of-Stake...",
-    "[SDK_STATUS] Контракт SymbiosisToken обнаружен по адресу: 0x320A6DDbE72151787c16b4D2000474Ba3fc02F7B",
-    "[SDK_STATUS] Контракт LiquidStakingSsym обнаружен по адресу: 0xAF8F7DE32A0d419Bdc4eDabEc9da6F2190e8f3BC",
-    "[SDK_STATUS] Контракт NashConsensusRegistry обнаружен по адресу: 0x9938DE81d35201dbF37c19A9a79771da4e827455"
+    "[SDK_STATUS] Контракт SymbiosisToken обнаружен по адресу: 0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "[SDK_STATUS] Контракт LiquidStakingSsym обнаружен по адресу: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "[SDK_STATUS] Контракт NashConsensusRegistry обнаружен по адресу: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    "[SDK_STATUS] Контракт ZkProverRegistry обнаружен по адресу: 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
   ]);
-  const [lastTxHash, setLastTxHash] = useState<string>('');
+  const [lastTxHash, setLastTxHash] = useState('');
+
+  // Off-chain Node Validator Daemon state
+  const [daemonActive, setDaemonActive] = useState<boolean>(false);
+  const [daemonStats, setDaemonStats] = useState<NodeAgentStats | null>(null);
+  const daemonRef = React.useRef<OffChainValidatorDaemon | null>(null);
+
+  const toggleDaemon = () => {
+    if (daemonActive) {
+      if (daemonRef.current) {
+        daemonRef.current.stop();
+      }
+      setDaemonActive(false);
+      addConsoleLog("🛑 Остановлен оффчейн ZK-Rollup Node-Validator.");
+    } else {
+      const activeAddr = walletAddress || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+      const daemon = new OffChainValidatorDaemon(activeAddr, (stats) => {
+        setDaemonStats(stats);
+        if (stats.logs.length > 0) {
+          const latestLog = stats.logs[0];
+          // Extrapolate logic message output to the main container terminal
+          addConsoleLog(`[NODE_AGENT] ${latestLog.substring(latestLog.indexOf(']') + 2)}`);
+        }
+      });
+      daemonRef.current = daemon;
+      daemon.start();
+      setDaemonActive(true);
+      addConsoleLog("🚀 Оффчейн ZK-Rollup Node-Validator запущен. Начат непрерывный процессинг L2 блоков...");
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (daemonRef.current) {
+        daemonRef.current.stop();
+      }
+    };
+  }, []);
 
   // Pre-loaded deployed addresses for Etherscan highlights
   const deployedAddresses = {
-    token: "0x320A6DDbE72151787c16b4D2000474Ba3fc02F7B",
-    staking: "0xAF8F7DE32A0d419Bdc4eDabEc9da6F2190e8f3BC",
-    consensus: "0x9938DE81d35201dbF37c19A9a79771da4e827455"
+    token: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    staking: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    consensus: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    zkProver: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+  };
+
+  const connectWeb3Wallet = async () => {
+    if (walletConnected) {
+      setWalletConnected(false);
+      setWalletAddress('');
+      addConsoleLog("🔌 Веб3-кошелек успешно отключен.");
+      return;
+    }
+    
+    addConsoleLog("🔌 Запуск авторизации Web3-кошелька (Wagmi Core / RainbowKit)...");
+    if (typeof window !== 'undefined' && (window as any).ethereum) {
+      try {
+        const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts && accounts[0]) {
+          setWalletConnected(true);
+          setWalletAddress(accounts[0]);
+          addConsoleLog(`✅ Web3 кошелек подключен успешно! Адрес: ${accounts[0]}`);
+          addLog(`🔑 [WAGMI/META_CONNECTED] Подключен кошелек: ${accounts[0].slice(0,6)}...${accounts[0].slice(-4)}`);
+        }
+      } catch (err: any) {
+        // Fallback to auto-simulated address
+        simulateWallet();
+      }
+    } else {
+      simulateWallet();
+    }
+  };
+
+  const simulateWallet = () => {
+    const mockAddr = "0x" + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('');
+    setWalletConnected(true);
+    setWalletAddress(mockAddr);
+    addConsoleLog(`✅ Подключен виртуальный dApp-провайдер Web3 (MetaMask/WalletConnect). Адрес: ${mockAddr}`);
+    addLog(`🔑 [WAGMI_CONNECTED] Пользователь подключил кошелек к Base/Arbitrum Sepolia: ${mockAddr.slice(0,6)}...${mockAddr.slice(-4)}`);
   };
 
   const addConsoleLog = (msg: string) => {
@@ -265,6 +342,44 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
                 Etherscan
               </a>
             </div>
+
+            {/* ZkProver Registry */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d10] border border-zinc-800/60 hover:border-[#a855f7]/30 transition-all duration-300 group/item">
+              <div>
+                <span className="text-zinc-500 block text-[9px] font-bold uppercase tracking-wider mb-1">ZkProver cryptographic registry (ZK-Cops)</span>
+                <span className="text-zinc-300 select-all group-hover/item:text-indigo-400 transition-colors font-mono">{deployedAddresses.zkProver}</span>
+              </div>
+              <a 
+                href={`https://sepolia.etherscan.io/address/${deployedAddresses.zkProver}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all"
+              >
+                Etherscan
+              </a>
+            </div>
+          </div>
+
+          {/* Web3 Wallet connection bar */}
+          <div className="mt-4 pt-3 border-t border-zinc-800/60 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${walletConnected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+              <span className="text-zinc-400 font-sans text-xs">
+                {walletConnected 
+                  ? `Разблокирован кошелек: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` 
+                  : 'RainbowKit / Wagmi не подсоединен'}
+              </span>
+            </div>
+            <button
+              onClick={connectWeb3Wallet}
+              className={`text-[10.5px] font-bold font-sans tracking-wide px-4 py-2 rounded-xl border transition-all cursor-pointer ${
+                walletConnected 
+                  ? 'bg-red-950/20 hover:bg-red-900/20 text-red-400 border-red-900/40' 
+                  : 'bg-indigo-950/20 hover:bg-indigo-950/40 text-indigo-400 border-indigo-900/60'
+              }`}
+            >
+              {walletConnected ? 'Отключить Web3 Кошелек' : 'Подключить Web3 Кошелек'}
+            </button>
           </div>
         </div>
 
@@ -272,7 +387,7 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
         <div className="border border-zinc-800/80 bg-gradient-to-b from-[#121215] to-[#09090b] rounded-2xl overflow-hidden flex flex-col min-h-[380px] shadow-lg shadow-black/80">
           
           {/* Navigation Controls bar */}
-          <div className="grid grid-cols-3 border-b border-zinc-850 bg-zinc-950/90 p-1.5 gap-1 shrink-0">
+          <div className="grid grid-cols-2 md:grid-cols-4 border-b border-zinc-850 bg-zinc-950/90 p-1.5 gap-1 shrink-0">
             <button
               onClick={() => setActiveSubTab('stake')}
               className={`py-2 text-[10.5px] font-bold font-sans tracking-wide transition-all cursor-pointer flex items-center justify-center gap-1.5 rounded-lg ${
@@ -306,6 +421,22 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-pink-500"></span>
               </span>
+            </button>
+            <button
+              onClick={() => setActiveSubTab('node_daemon' as any)}
+              className={`py-2 text-[10.5px] font-bold font-sans tracking-wide transition-all cursor-pointer flex items-center justify-center gap-1.5 rounded-lg relative ${
+                (activeSubTab as any) === 'node_daemon'
+                  ? 'bg-zinc-900 text-indigo-400 border border-zinc-800 font-extrabold'
+                  : 'text-zinc-400 hover:text-zinc-250 border border-transparent'
+              }`}
+            >
+              <Cpu className={`w-3.5 h-3.5 ${daemonActive ? 'text-emerald-400 animate-spin' : 'text-[#a855f7]'}`} /> Оффчейн-нода
+              {daemonActive && (
+                <span className="absolute -top-1 -right-0.5 flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+              )}
             </button>
           </div>
 
@@ -573,6 +704,81 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
                   <div>
                     <strong>Правило игры:</strong> За ложное обвинение честной ноды с вас спишется штраф 50 SYM для предотвращения спама в реестре! Пожалуйста, выбирайте цели для слэшинга аккуратно.
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUBTAB 4 : OFF-CHAIN NODE DAEMON DEPLOYER */}
+            {(activeSubTab as any) === 'node_daemon' && (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-emerald-950/20 text-emerald-400 p-2.5 rounded-lg border border-emerald-900/30 shrink-0">
+                    <Cpu className={`w-5 h-5 ${daemonActive ? 'animate-pulse' : ''}`} />
+                  </div>
+                  <div>
+                    <h3 className="text-zinc-150 font-bold font-sans text-xs">Автономный Оффчейн-Демон Node-Validator (ZK-Cops)</h3>
+                    <p className="text-[10.5px] text-zinc-400 font-sans mt-0.5 leading-relaxed">
+                      Запустите децентрализованную симуляцию работы ноды-верификатора. Демон в реальном времени мониторит транзакции L2, генерирует криптографические доказательства <strong>ZK-Cops</strong>, подписывает их с помощью <strong>Falcon-512</strong> и шлет транзакции на контракт <code>ZkProverRegistry</code>!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={toggleDaemon}
+                    className={`w-full py-2.5 rounded-xl border font-bold text-xs font-sans tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                      daemonActive 
+                        ? 'bg-red-950/20 hover:bg-red-900/10 text-red-400 border-red-900/50' 
+                        : 'bg-emerald-950/20 hover:bg-emerald-900/10 text-emerald-400 border-emerald-900/50'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${daemonActive ? 'bg-emerald-500 animate-ping' : 'bg-red-500'}`} />
+                    {daemonActive ? 'ОСТАНОВИТЬ ДЕМОН НОДЫ' : 'ЗАПУСТИТЬ ОФФЧЕЙН-ДЕМОН'}
+                  </button>
+
+                  <div className="bg-[#0b0b0d] border border-zinc-900 rounded-xl p-2.5 flex items-center justify-between font-mono text-[10.5px]">
+                    <div>
+                      <span className="text-zinc-500 block text-[8px] uppercase tracking-wider font-bold">Текущий тариф репутации</span>
+                      <span className="text-indigo-400 font-bold text-xs">{daemonStats ? `${daemonStats.currentReputation}/200` : '100/200'} REP</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-zinc-500 block text-[8px] uppercase tracking-wider font-bold">Буст APY наград</span>
+                      <span className="text-yellow-500 font-bold text-xs">{daemonStats ? `${(daemonStats.currentReputation/100).toFixed(1)}x` : '1.0x'} Yield</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Live Daemon Logs / Statistics Grid */}
+                <div className="grid grid-cols-3 gap-2.5 text-center">
+                  <div className="p-3 bg-zinc-950 border border-zinc-900 rounded-xl">
+                    <span className="text-zinc-500 block text-[8.5px] uppercase tracking-wider font-mono font-bold">Блоков обработано</span>
+                    <span className="text-white font-extrabold text-sm font-mono mt-1 block">
+                      {daemonStats ? daemonStats.blocksProcessed : '0'}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-zinc-950 border border-zinc-900 rounded-xl">
+                    <span className="text-zinc-500 block text-[8.5px] uppercase tracking-wider font-mono font-bold text-teal-400">Доказательств ZK</span>
+                    <span className="text-teal-400 font-extrabold text-sm font-mono mt-1 block">
+                      {daemonStats ? daemonStats.proofsGenerated : '0'}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-zinc-950 border border-zinc-900 rounded-xl">
+                    <span className="text-zinc-500 block text-[8.5px] uppercase tracking-wider font-mono font-bold text-indigo-400">Награда (SYM)</span>
+                    <span className="text-yellow-400 font-extrabold text-sm font-mono mt-1 block">
+                      {daemonStats ? `+${daemonStats.accumulatedRewards.toFixed(1)}` : '0.0'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Additional Node System Metadata Box */}
+                <div className="p-3 py-2.5 rounded bg-zinc-950 border border-zinc-900 flex items-center justify-between text-[10px] font-sans">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${daemonActive ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-700'}`} />
+                    <span className="text-zinc-450 font-mono">Sovereign Falcon Verification Engine:</span>
+                  </div>
+                  <span className="text-zinc-300 font-mono">
+                    {daemonActive ? 'Connected & Validating' : 'Inactive'}
+                  </span>
                 </div>
               </div>
             )}

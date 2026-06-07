@@ -37,9 +37,12 @@ contract NashConsensusRegistry is ReentrancyGuard, Pausable {
     mapping(address => uint256) public lastClaimBlock;
     bool private inSlashingContext;
 
+    address public zkProverRegistryAddr;
+
     event ValidatorRegistered(address indexed node, uint256 initialStake);
     event NodeSlashed(address indexed node, uint256 slashedAmount, string reason);
     event ParameterUpdated(string name, uint256 value);
+    event ReputationBoosted(address indexed validator, uint256 newReputation);
 
     constructor(address _symToken) {
         require(_symToken != address(0), "Invalid token address");
@@ -200,14 +203,16 @@ contract NashConsensusRegistry is ReentrancyGuard, Pausable {
     }
 
     /// @notice Submit blocks checked to earn validator consensus rewards (A-02) (Fixed NEW-HIGH-01)
+    /// @dev Rewards are dynamically boosted by up to 2x (reputation up to 200) based on ZK-Cops proof validations!
     function submitBlockVerification(uint256 blockCount) external nonReentrant whenNotPaused {
         ValidatorNode storage v = validators[msg.sender];
         require(v.stakedAmount > 0, "Must be a validator");
         require(!v.isSlashed, "Slashed nodes cannot obtain rewards");
         require(blockCount > 0, "Invalid block count");
 
-        // Reward structure: 5 SYM per block format
-        uint256 reward = blockCount * 5 * 10 ** 18;
+        // Reward structure: 5 SYM per block base, scaled by reputation rating (100 = 1x, 200 = 2x)
+        uint256 baseReward = blockCount * 5 * 10 ** 18;
+        uint256 reward = (baseReward * v.reputation) / 100;
         
         v.totalBlocksChecked += blockCount;
         v.lastVerifiedBlock = block.number;
@@ -255,5 +260,24 @@ contract NashConsensusRegistry is ReentrancyGuard, Pausable {
         unbondingEta[msg.sender] = 0;
 
         IERC20(address(symToken)).safeTransfer(msg.sender, stakeAmount);
+    }
+
+    /// @notice Configure associated ZkProverRegistry address
+    function setZkProverRegistry(address _zkProverRegistry) external onlyGovernor {
+        require(_zkProverRegistry != address(0), "Zero address");
+        zkProverRegistryAddr = _zkProverRegistry;
+    }
+
+    /// @notice Allows the ZkProverRegistry to boost a validator's reputation after successful ZK computation validation
+    function boostReputationWithZk(address validator, uint256 boostAmount) external {
+        require(msg.sender == zkProverRegistryAddr, "Only ZK Prover Registry can boost reputation");
+        ValidatorNode storage v = validators[validator];
+        if (v.stakedAmount > 0 && !v.isSlashed) {
+            v.reputation += boostAmount;
+            if (v.reputation > 200) {
+                v.reputation = 200; // Max reputation cap (2x reward booster)
+            }
+            emit ReputationBoosted(validator, v.reputation);
+        }
     }
 }

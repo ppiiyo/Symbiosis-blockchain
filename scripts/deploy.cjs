@@ -24,7 +24,14 @@ async function main() {
   const consensusAddress = await consensus.getAddress();
   console.log(`✅ NashConsensusRegistry развернут по адресу: ${consensusAddress}`);
 
-  // 4. Связывание контрактов
+  // 4. Деплой ZkProverRegistry
+  const ZkProverRegistry = await hre.ethers.getContractFactory("ZkProverRegistry");
+  const zkProver = await ZkProverRegistry.deploy(tokenAddress);
+  await zkProver.waitForDeployment();
+  const zkProverAddress = await zkProver.getAddress();
+  console.log(`✅ ZkProverRegistry развернут по адресу: ${zkProverAddress}`);
+
+  // 5. Связывание контрактов
   console.log("\n🔗 Связывание контрактов: Регистрация Consensus Registry в Token через DAO-предложение...");
   
   // Создаем предложение
@@ -36,6 +43,7 @@ async function main() {
   console.log(`  npx hardhat verify --network <network> ${tokenAddress}`);
   console.log(`  npx hardhat verify --network <network> ${stakingAddress} "${tokenAddress}"`);
   console.log(`  npx hardhat verify --network <network> ${consensusAddress} "${tokenAddress}"`);
+  console.log(`  npx hardhat verify --network <network> ${zkProverAddress} "${tokenAddress}"`);
 
   console.log("\n💡 Для деплоя на live сети, используйте DAO-интерфейс для голосования и выполнения предложения (proposalId: 0).");
   console.log("📝 Адреса успешно сохранены. Протокол готов к локальному тестированию в Arbitrum / Base Sepolia!");

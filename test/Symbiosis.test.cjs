@@ -544,4 +544,114 @@ describe("Symbiosis Protocol Test Suite", function () {
       ).to.be.revertedWith("Exceeds accumulated rewards");
     });
   });
+
+  describe("8. ERC-4626 Standard & ZK-Cops Integration Tests", function () {
+    let zkProverRegistry;
+
+    beforeEach(async function () {
+      const ZkProverRegistry = await ethers.getContractFactory("ZkProverRegistry");
+      zkProverRegistry = await ZkProverRegistry.deploy(await symToken.getAddress());
+      await zkProverRegistry.waitForDeployment();
+    });
+
+    it("Should provide standard ERC-4626 interfaces (totalAssets, asset, convertToShares)", async function () {
+      const assetAddr = await sSymToken.asset();
+      expect(assetAddr).to.equal(await symToken.getAddress());
+
+      const initialAssets = await sSymToken.totalAssets();
+      expect(initialAssets).to.equal(0n);
+
+      const sharesFor100SYM = await sSymToken.convertToShares(ethers.parseEther("100"));
+      // First deposit burns 1000 shares
+      expect(sharesFor100SYM).to.equal(ethers.parseEther("100") - 1000n);
+    });
+
+    it("Should support standard ERC-4626 deposit and redeem calls", async function () {
+      const stakeAmount = ethers.parseEther("100");
+      await symToken.transfer(user.address, stakeAmount);
+      await symToken.connect(user).approve(await sSymToken.getAddress(), stakeAmount);
+
+      // Call standard ERC-4626 deposit(assets, receiver)
+      await sSymToken.connect(user).deposit(stakeAmount, user.address);
+
+      const shares = await sSymToken.balanceOf(user.address);
+      expect(shares).to.equal(stakeAmount - 1000n);
+
+      // Redeem shares using standard ERC-4626 redeem(shares, receiver, owner)
+      await sSymToken.connect(user).approve(await sSymToken.getAddress(), shares);
+      await sSymToken.connect(user).redeem(shares, user.address, user.address);
+
+      expect(await sSymToken.balanceOf(user.address)).to.equal(0n);
+    });
+
+    it("Should allow whitelisting / unwhitelisting of ZK Provers in ZkProverRegistry", async function () {
+      // Owner (governor) can update status of prover
+      await zkProverRegistry.connect(owner).setProverStatus(externalUser.address, true);
+      expect(await zkProverRegistry.authorizedProvers(externalUser.address)).to.be.true;
+
+      // Unauthorized callers (non-governor) cannot set status
+      await expect(
+        zkProverRegistry.connect(externalUser).setProverStatus(user.address, true)
+      ).to.be.revertedWith("Caller is not an authorized governor");
+    });
+
+    it("Should allow authorized ZK Provers to verify computation proofs under ZK-Cops", async function () {
+      const compHash = ethers.keccak256(ethers.toUtf8Bytes("computation1"));
+      const proof = ethers.hexlify(ethers.randomBytes(32));
+      const publicInputsHash = ethers.keccak256(ethers.toUtf8Bytes("inputs1"));
+
+      // Standard verification run by authorized prover (deployer/owner is authorized by constructor)
+      await zkProverRegistry.connect(owner).submitAndVerifyProof(compHash, proof, publicInputsHash, user.address);
+
+      // Verification mapped successfully
+      const expectedProofHash = ethers.solidityPackedKeccak256(
+        ["bytes32", "bytes", "bytes32"],
+        [compHash, proof, publicInputsHash]
+      );
+      expect(await zkProverRegistry.verifiedProofs(expectedProofHash)).to.be.true;
+
+      // Non-authorized prover should revert
+      await expect(
+        zkProverRegistry.connect(externalUser).submitAndVerifyProof(compHash, proof, publicInputsHash, user.address)
+      ).to.be.revertedWith("Caller is not an authorized ZK prover");
+    });
+
+    it("Should boost validator reputation and scale rewards proportionally through ZK-Cops integrations", async function () {
+      // 1. Register validator node
+      const registerAmount = ethers.parseEther("150");
+      await symToken.transfer(validator.address, registerAmount);
+      await symToken.connect(validator).approve(await consensus.getAddress(), registerAmount);
+      const falconKey = ethers.hexlify(ethers.randomBytes(64));
+      await consensus.connect(validator).registerValidator(registerAmount, falconKey);
+
+      const nodeBefore = await consensus.validators(validator.address);
+      expect(nodeBefore.reputation).to.equal(100n); // Default reputation is 100
+
+      // Link contracts
+      await consensus.connect(owner).setZkProverRegistry(await zkProverRegistry.getAddress());
+      await zkProverRegistry.connect(owner).setConsensusRegistry(await consensus.getAddress());
+
+      // 2. Submit ZK computation proof linked to validator address
+      const compHash = ethers.keccak256(ethers.toUtf8Bytes("computation2"));
+      const proof = ethers.hexlify(ethers.randomBytes(32));
+      const publicInputsHash = ethers.keccak256(ethers.toUtf8Bytes("inputs2"));
+
+      await zkProverRegistry.connect(owner).submitAndVerifyProof(compHash, proof, publicInputsHash, validator.address);
+
+      // Reputation should be boosted by +20
+      const nodeAfter = await consensus.validators(validator.address);
+      expect(nodeAfter.reputation).to.equal(120n);
+
+      // 3. Verify boosted rewards calculations (1.2x modifier)
+      const initialRewards = await consensus.accumulatedRewards(validator.address);
+      expect(initialRewards).to.equal(0n);
+
+      // Submit block verification for 10 blocks (base reward is 10 blocks * 5 SYM = 50 SYM)
+      await consensus.connect(validator).submitBlockVerification(10);
+
+      // Boosted reward: 50 SYM * 120 / 100 = 60 SYM!
+      const boostedRewards = await consensus.accumulatedRewards(validator.address);
+      expect(boostedRewards).to.equal(ethers.parseEther("60"));
+    });
+  });
 });
