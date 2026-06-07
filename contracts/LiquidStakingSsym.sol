@@ -4,12 +4,13 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./SymbiosisToken.sol";
 
 /// @title Liquid Staking for Symbiosis Protocol (sSYM)
 /// @notice This contract enables users to stake SYM tokens to receive liquid sSYM tokens.
-/// @dev Implements SafeERC20 and ReentrancyGuard for robust protection.
-contract LiquidStakingSsym is ERC20, ReentrancyGuard {
+/// @dev Implements SafeERC20, ReentrancyGuard, and Pausable for robust protection.
+contract LiquidStakingSsym is ERC20, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     /// @notice The underlying Symbiosis utility token
@@ -39,8 +40,23 @@ contract LiquidStakingSsym is ERC20, ReentrancyGuard {
         zkProverRegistry = newRegistry;
     }
 
+    modifier onlyGovernor() {
+        require(symToken.isGovernor(msg.sender), "Caller is not an authorized governor");
+        _;
+    }
+
+    /// @notice Triggers emergency pausing of all staking/unstaking operations
+    function pause() external onlyGovernor {
+        _pause();
+    }
+
+    /// @notice Resumes standard staking/unstaking operations
+    function unpause() external onlyGovernor {
+        _unpause();
+    }
+
     /// @notice Stakes SYM tokens to receive derivative sSYM shares
-    function stake(uint256 amount) external nonReentrant {
+    function stake(uint256 amount) external nonReentrant whenNotPaused {
         require(amount > 0, "Amount must be greater than 0");
 
         uint256 totalShares = totalSupply();
@@ -64,7 +80,7 @@ contract LiquidStakingSsym is ERC20, ReentrancyGuard {
     }
 
     /// @notice Burns sSYM shares to reclaim the corresponding underlying SYM tokens
-    function unstake(uint256 shares) external nonReentrant {
+    function unstake(uint256 shares) external nonReentrant whenNotPaused {
         require(shares > 0, "Shares must be greater than 0");
 
         uint256 totalShares = totalSupply();

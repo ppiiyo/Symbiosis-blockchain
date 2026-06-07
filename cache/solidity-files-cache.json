@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/app/applet/contracts/LiquidStakingSsym.sol": {
-      "lastModificationDate": 1780833027026,
-      "contentHash": "c365f9906bbf2a8ab51291b3cb1e3560",
+      "lastModificationDate": 1780855247527,
+      "contentHash": "a82d59b16e48ae7afd008c37c8a4f0d1",
       "sourceName": "contracts/LiquidStakingSsym.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -33,6 +33,7 @@
         "@openzeppelin/contracts/token/ERC20/ERC20.sol",
         "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
         "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+        "@openzeppelin/contracts/utils/Pausable.sol",
         "./SymbiosisToken.sol"
       ],
       "versionPragmas": [
@@ -346,8 +347,8 @@
       ]
     },
     "/app/applet/contracts/NashConsensusRegistry.sol": {
-      "lastModificationDate": 1780833681212,
-      "contentHash": "83408cee54a57ebbe6f55879c2d2718f",
+      "lastModificationDate": 1780855348212,
+      "contentHash": "34d2ef8cce6e3bbdf4fdc51a0c027f9a",
       "sourceName": "contracts/NashConsensusRegistry.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -376,6 +377,7 @@
       "imports": [
         "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
         "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+        "@openzeppelin/contracts/utils/Pausable.sol",
         "./SymbiosisToken.sol"
       ],
       "versionPragmas": [
@@ -644,6 +646,44 @@
       ],
       "artifacts": [
         "IERC165"
+      ]
+    },
+    "/app/applet/node_modules/@openzeppelin/contracts/utils/Pausable.sol": {
+      "lastModificationDate": 1780854441165,
+      "contentHash": "24e52f6ef3868e6fca664a423140bee9",
+      "sourceName": "@openzeppelin/contracts/utils/Pausable.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../utils/Context.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "Pausable"
       ]
     }
   }

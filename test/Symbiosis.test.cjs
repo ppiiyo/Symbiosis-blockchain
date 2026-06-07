@@ -390,4 +390,59 @@ describe("Symbiosis Protocol Test Suite", function () {
       ).to.be.revertedWith("Only Consensus Registry can trigger recycling");
     });
   });
+
+  describe("6. Emergency Pausable Guards", function () {
+    it("Should allow only governors to pause/unpause staking, and revert operations when paused", async function () {
+      // 1. Non-governor attempts to pause staking (must revert)
+      await expect(
+        sSymToken.connect(user).pause()
+      ).to.be.revertedWith("Caller is not an authorized governor");
+
+      // 2. Governor pauses staking (must succeed)
+      await sSymToken.connect(owner).pause();
+
+      // 3. Attempt staking when paused (must revert with EnforcedPause)
+      const stakeAmount = ethers.parseEther("10");
+      await symToken.transfer(user.address, stakeAmount);
+      await symToken.connect(user).approve(await sSymToken.getAddress(), stakeAmount);
+      await expect(
+        sSymToken.connect(user).stake(stakeAmount)
+      ).to.be.revertedWithCustomError(sSymToken, "EnforcedPause");
+
+      // 4. Governor unpauses staking (must succeed)
+      await sSymToken.connect(owner).unpause();
+
+      // 5. Staking after unpausing (must succeed)
+      await sSymToken.connect(user).stake(stakeAmount);
+      expect(await sSymToken.balanceOf(user.address)).to.be.greaterThan(0n);
+    });
+
+    it("Should allow only governors to pause/unpause consensus, and revert operations when paused", async function () {
+      // 1. Non-governor attempts to pause consensus (must revert)
+      await expect(
+        consensus.connect(user).pause()
+      ).to.be.revertedWith("Caller is not an authorized governor");
+
+      // 2. Governor pauses consensus (must succeed)
+      await consensus.connect(owner).pause();
+
+      // 3. Validator registration attempt when paused (must revert with EnforcedPause)
+      const initialStake = ethers.parseEther("100");
+      await symToken.transfer(validator.address, initialStake);
+      await symToken.connect(validator).approve(await consensus.getAddress(), initialStake);
+      const fakeFalconPubKey = ethers.hexlify(ethers.randomBytes(32));
+
+      await expect(
+        consensus.connect(validator).registerValidator(initialStake, fakeFalconPubKey)
+      ).to.be.revertedWithCustomError(consensus, "EnforcedPause");
+
+      // 4. Governor unpauses consensus (must succeed)
+      await consensus.connect(owner).unpause();
+
+      // 5. Validator registration after unpausing (must succeed)
+      await consensus.connect(validator).registerValidator(initialStake, fakeFalconPubKey);
+      const valInfo = await consensus.validators(validator.address);
+      expect(valInfo.stakedAmount).to.equal(initialStake);
+    });
+  });
 });
