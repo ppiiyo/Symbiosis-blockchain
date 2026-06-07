@@ -3,22 +3,22 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /// @title Symbiosis Native Token Contract (SYM)
 /// @notice Custom ERC20 with burnable functionality, gas-recycling, and multi-sig timelocked governance.
-contract SymbiosisToken is ERC20, ERC20Burnable {
+contract SymbiosisToken is ERC20, ERC20Burnable, Pausable {
     uint256 public constant MAX_SUPPLY = 1_000_000_000 * 10 ** 18;
 
     mapping(address => bool) public isValidatorNode;
     address public consensusRegistry;
 
-    /// @dev Исправлено: constable-states — переменная теперь constant
-    uint256 public constant gasBackPercentage = 25;
+    /// @dev Settable by governance (A-05)
+    uint256 public gasBackPercentage = 25;
+    uint256 public timelockDelay = 24 hours;
 
     address[] public governors;
     mapping(address => bool) public isGovernor;
-
-    uint256 public constant TIMELOCK_DELAY = 24 hours;
 
     struct Proposal {
         string actionType;
@@ -36,6 +36,7 @@ contract SymbiosisToken is ERC20, ERC20Burnable {
     event ProposalExecuted(uint256 indexed proposalId, string actionType, address indexed target);
     event GasRecycled(address indexed validator, uint256 amount);
     event ConsensusRegistryUpdated(address indexed registry);
+    event RewardsClaimed(address indexed validator, uint256 amount);
 
     modifier onlyGovernor() {
         require(isGovernor[msg.sender], "Caller is not an authorized governor");
@@ -58,12 +59,20 @@ contract SymbiosisToken is ERC20, ERC20Burnable {
         _mint(address(this), MAX_SUPPLY * 20 / 100);
     }
 
-    /// @dev Исправлено: naming-convention — параметры в camelCase
+    /// @notice pause transfers and other controls during emergency (A-06)
+    function pause() external onlyGovernor {
+        _pause();
+    }
+
+    function unpause() external onlyGovernor {
+        _unpause();
+    }
+
     function proposeAction(
         string memory actionType,
         address target
-    ) external onlyGovernor returns (uint256) {
-        uint256 eta = block.timestamp + TIMELOCK_DELAY;
+    ) external onlyGovernor whenNotPaused returns (uint256) {
+        uint256 eta = block.timestamp + timelockDelay;
         proposals.push(
             Proposal({
                 actionType: actionType,
@@ -80,9 +89,10 @@ contract SymbiosisToken is ERC20, ERC20Burnable {
         return proposalId;
     }
 
-    function voteProposal(uint256 proposalId) external onlyGovernor {
+    function voteProposal(uint256 proposalId) external onlyGovernor whenNotPaused {
         Proposal storage prop = proposals[proposalId];
         require(!prop.executed, "Proposal already executed");
+        require(block.timestamp < prop.eta, "Voting period has ended"); // Fixed V-05
         require(!hasVoted[proposalId][msg.sender], "Already voted on this proposal");
 
         hasVoted[proposalId][msg.sender] = true;
@@ -91,7 +101,7 @@ contract SymbiosisToken is ERC20, ERC20Burnable {
         emit ProposalVoted(proposalId, msg.sender, prop.yesVotes);
     }
 
-    function executeProposal(uint256 proposalId) external onlyGovernor {
+    function executeProposal(uint256 proposalId) external onlyGovernor whenNotPaused {
         Proposal storage prop = proposals[proposalId];
         require(!prop.executed, "Proposal already executed");
         require(block.timestamp >= prop.eta, "Timelock delay is not over yet");
@@ -99,13 +109,20 @@ contract SymbiosisToken is ERC20, ERC20Burnable {
 
         prop.executed = true;
 
-        if (keccak256(bytes(prop.actionType)) == keccak256(bytes("setConsensusRegistry"))) {
+        // Optimized gas hash computation once (A-09)
+        bytes32 actionHash = keccak256(bytes(prop.actionType));
+
+        if (actionHash == keccak256(bytes("setConsensusRegistry"))) {
             consensusRegistry = prop.targetAddress;
             emit ConsensusRegistryUpdated(prop.targetAddress);
-        } else if (keccak256(bytes(prop.actionType)) == keccak256(bytes("registerValidator"))) {
+        } else if (actionHash == keccak256(bytes("registerValidator"))) {
             isValidatorNode[prop.targetAddress] = true;
-        } else if (keccak256(bytes(prop.actionType)) == keccak256(bytes("updateGovernor"))) {
+        } else if (actionHash == keccak256(bytes("updateGovernor"))) {
             isGovernor[prop.targetAddress] = !isGovernor[prop.targetAddress];
+        } else if (actionHash == keccak256(bytes("setGasBackPercentage"))) {
+            gasBackPercentage = uint256(uint160(prop.targetAddress));
+        } else if (actionHash == keccak256(bytes("setTimelockDelay"))) {
+            timelockDelay = uint256(uint160(prop.targetAddress));
         } else {
             revert("Unknown action type");
         }
@@ -113,14 +130,34 @@ contract SymbiosisToken is ERC20, ERC20Burnable {
         emit ProposalExecuted(proposalId, prop.actionType, prop.targetAddress);
     }
 
-    function recycleGas(address validator, uint256 gasUsed) external {
+    function recycleGas(address validator, uint256 gasUsed) external whenNotPaused {
         require(msg.sender == consensusRegistry, "Only Consensus Registry can trigger recycling");
-        uint256 refundAmount = (gasUsed * tx.gasprice * gasBackPercentage) / 100;
+        
+        // Use block.basefee or fallback to tx.gasprice if block.basefee is 0 (Fixed V-08)
+        uint256 baseFee = block.basefee > 0 ? block.basefee : tx.gasprice;
+        uint256 refundAmount = (gasUsed * baseFee * gasBackPercentage) / 100;
         uint256 maxRefund = 5000 * 10 ** 18;
         if (refundAmount > maxRefund) refundAmount = maxRefund;
 
         require(balanceOf(address(this)) >= refundAmount, "Insufficient treasury gas recycling balance");
         _transfer(address(this), validator, refundAmount);
         emit GasRecycled(validator, refundAmount);
+    }
+
+    /// @notice Claim validator rewards (A-02)
+    function claimValidatorRewards(address validator, uint256 rewardAmount) external whenNotPaused {
+        require(msg.sender == consensusRegistry, "Only Consensus Registry can claim rewards");
+        require(balanceOf(address(this)) >= rewardAmount, "Reward pool is empty");
+        _transfer(address(this), validator, rewardAmount);
+        emit RewardsClaimed(validator, rewardAmount);
+    }
+
+    /// @notice Pause transfer overrides (A-06)
+    function transfer(address to, uint256 value) public override whenNotPaused returns (bool) {
+        return super.transfer(to, value);
+    }
+
+    function transferFrom(address from, address to, uint256 value) public override whenNotPaused returns (bool) {
+        return super.transferFrom(from, to, value);
     }
 }

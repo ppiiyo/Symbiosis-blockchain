@@ -27,14 +27,16 @@ contract LiquidStakingSsym is ERC20, ReentrancyGuard, Pausable {
 
     /// @notice Deploys the liquid staking contract linked to the official SYM ERC20 token
     constructor(address _symToken) ERC20("Liquid Staked SYM", "sSYM") {
+        require(_symToken != address(0), "Invalid token address"); // Fixed V-07
         symToken = SymbiosisToken(_symToken);
     }
 
     /// @notice Updates the associated ZK Prover Registry authorized entity
     function updateZkProver(address newRegistry) external {
         require(newRegistry != address(0), "Zero address");
+        // Only governors can initialize it if empty, otherwise only current registry can change (Fixed V-06)
         require(
-            zkProverRegistry == address(0) || msg.sender == zkProverRegistry,
+            (zkProverRegistry == address(0) && symToken.isGovernor(msg.sender)) || msg.sender == zkProverRegistry,
             "Unauthorized"
         );
         zkProverRegistry = newRegistry;
@@ -64,6 +66,7 @@ contract LiquidStakingSsym is ERC20, ReentrancyGuard, Pausable {
 
         uint256 sharesToMint;
         if (totalShares < 1) {
+            require(amount > 1000, "Minimum first stake is 1001 SYM"); // Fixed V-03 Underflow
             _mint(address(0x000000000000000000000000000000000000dEaD), 1000);
             sharesToMint = amount - 1000;
         } else {
