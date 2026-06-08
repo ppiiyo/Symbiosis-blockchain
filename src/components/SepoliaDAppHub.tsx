@@ -74,10 +74,10 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
   const [executing, setExecuting] = useState<boolean>(false);
   const [sdkLogs, setSdkLogs] = useState<string[]>([
     "[SYSTEM_INIT] Подключено к провайдеру Sepolia Proof-of-Stake...",
-    "[SDK_STATUS] Контракт SymbiosisToken обнаружен по адресу: 0x5FbDB2315678afecb367f032d93F642f64180aa3",
-    "[SDK_STATUS] Контракт LiquidStakingSsym обнаружен по адресу: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "[SDK_STATUS] Контракт NashConsensusRegistry обнаружен по адресу: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-    "[SDK_STATUS] Контракт ZkProverRegistry обнаружен по адресу: 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+    "[SDK_STATUS] Контракт SymbiosisToken обнаружен по адресу: 0xaDe5390bE98b6aAb9afa45C1570D8AbF53995811",
+    "[SDK_STATUS] Контракт LiquidStakingSsym обнаружен по адресу: 0xa72f6000208cC13340EC0451BD3e22a45f8E42e6",
+    "[SDK_STATUS] Контракт NashConsensusRegistry обнаружен по адресу: 0x3B51dddcd847531a5c908acB0a0385E8A30090ec",
+    "[SDK_STATUS] Контракт ZkProverRegistry обнаружен по адресу: 0x9e287f1E03983767Fe84a46AF6f616C1C0093149"
   ]);
   const [lastTxHash, setLastTxHash] = useState('');
 
@@ -118,9 +118,18 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
     };
   }, []);
 
-  const [selectedNetwork, setSelectedNetwork] = useState<'localhost' | 'baseSepolia' | 'arbitrumSepolia'>('localhost');
+  const [selectedNetwork, setSelectedNetwork] = useState<'sepolia' | 'localhost' | 'baseSepolia' | 'arbitrumSepolia'>('sepolia');
 
   const networkAddresses = {
+    sepolia: {
+      name: "Ethereum Sepolia Testnet (Real Deployment)",
+      token: "0xaDe5390bE98b6aAb9afa45C1570D8AbF53995811",
+      staking: "0xa72f6000208cC13340EC0451BD3e22a45f8E42e6",
+      consensus: "0x3B51dddcd847531a5c908acB0a0385E8A30090ec",
+      zkProver: "0x9e287f1E03983767Fe84a46AF6f616C1C0093149",
+      explorer: "https://sepolia.etherscan.io/address/",
+      explorerName: "Etherscan"
+    },
     localhost: {
       name: "Localhost (Hardhat Node)",
       token: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
@@ -324,6 +333,16 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
             
             {/* Network Selector Tabs */}
             <div className="flex bg-zinc-900 border border-zinc-800 p-1 rounded-xl gap-1">
+              <button
+                onClick={() => setSelectedNetwork('sepolia')}
+                className={`px-2 py-1 text-[9px] font-mono tracking-wider font-bold rounded-lg transition-all ${
+                  selectedNetwork === 'sepolia'
+                    ? 'bg-[#181126] text-purple-400 border border-purple-500/20 font-black'
+                    : 'text-zinc-500 hover:text-zinc-350'
+                }`}
+              >
+                Sepolia L1
+              </button>
               <button
                 onClick={() => setSelectedNetwork('localhost')}
                 className={`px-2 py-1 text-[9px] font-mono tracking-wider font-bold rounded-lg transition-all ${

@@ -81,21 +81,27 @@
 
 ## ⛓️ Сведения о развертывании смарт-контрактов
 
-В репозитории преднастроены и сохранены проверенные адреса контрактов для трех основных сред выполнения. Вы можете мгновенно переключаться между ними внутри панели dApp:
+В репозитории преднастроены и сохранены проверенные адреса контрактов для сред выполнения. Вы можете мгновенно переключаться между ними внутри панели dApp:
 
-### 1. Локальная Сеть (Hardhat Local Dev Network)
+### 1. Ethereum Sepolia (Real Live L1 Deployment)
+*   **SymbiosisToken (SYM)**: `0xaDe5390bE98b6aAb9afa45C1570D8AbF53995811`
+*   **LiquidStakingSsym (sSYM)**: `0xa72f6000208cC13340EC0451BD3e22a45f8E42e6`
+*   **NashConsensusRegistry**: `0x3B51dddcd847531a5c908acB0a0385E8A30090ec`
+*   **ZkProverRegistry**: `0x9e287f1E03983767Fe84a46AF6f616C1C0093149`
+
+### 2. Локальная Сеть (Hardhat Local Dev Network)
 *   **SymbiosisToken (SYM)**: `0x5FbDB2315678afecb367f032d93F642f64180aa3`
 *   **LiquidStakingSsym (sSYM)**: `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512`
 *   **NashConsensusRegistry**: `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0`
 *   **ZkProverRegistry**: `0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9`
 
-### 2. Base Sepolia (L2 Testnet)
+### 3. Base Sepolia (L2 Testnet)
 *   **SymbiosisToken (SYM)**: `0x9E751Dbf02DAdc4fAF9EFDF8ee9df84557f38bBD4`
 *   **LiquidStakingSsym (sSYM)**: `0xc9074F96f9C00dB9E323aAAd8FdCe73f1dDdc44e`
 *   **NashConsensusRegistry**: `0x6a0d01b50e0d17dc79C85078dbb4c106972e399b`
 *   **ZkProverRegistry**: `0x1Cf7Ed3AccA5a467e9e704C703E8D87F634fB0992`
 
-### 3. Arbitrum Sepolia (L2 Testnet)
+### 4. Arbitrum Sepolia (L2 Testnet)
 *   **SymbiosisToken (SYM)**: `0x23aAAd8FdCe73f1dDdc44e59074F96f9C00dB9E9c`
 *   **LiquidStakingSsym (sSYM)**: `0x573f1dDdc44e59074F96f9C052acae73f1dDdc44e`
 *   **NashConsensusRegistry**: `0x8e704C703E8D87F634fB0Fc91Cf7Ed3AccA5a467`
