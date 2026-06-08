@@ -24,27 +24,10 @@ import {
   PieChart
 } from 'lucide-react';
 
-interface ConsensusProfile {
-  id: string;
-  name: string;
-  type: string;
-  finality: string;
-  tps: string;
-  vulnerability: 'None' | 'High' | 'Zero' | 'Medium';
-  capitalEfficiency: 'Low' | 'Medium' | 'Maximum';
-  energyCost: string;
-  hardwareReqs: string;
-  mathematicalStability: string;
-  description: string;
-  drawback: string; // Explicitly showing where we initially lose
-  remedy: string;   // How Symbiosis fixes / wins this drawback
-}
-
 export const SymbiosisRoadmap: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'roadmap' | 'competitors' | 'tokenomics' | 'executive_report'>('roadmap');
-  const [activePhase, setActivePhase] = useState<number>(2); // Phase 3 in progress by default
+  const [activeSubTab, setActiveSubTab] = useState<'roadmap' | 'tokenomics' | 'executive_report'>('roadmap');
+  const [activePhase, setActivePhase] = useState<number>(3); // Phase 4 is active
   const [selectedAllocation, setSelectedAllocation] = useState<string>('staking');
-  const [selectedConsensusId, setSelectedConsensusId] = useState<string>('sym');
 
   // Tokenomics Initial Allocation Definition
   const allocations = [
@@ -77,72 +60,6 @@ export const SymbiosisRoadmap: React.FC = () => {
     }
   ];
 
-  // Competitor Profiling (Detailed contrast matrix)
-  const consensusProfiles: ConsensusProfile[] = [
-    {
-      id: 'pow',
-      name: 'Proof of Work (PoW) - Bitcoin',
-      type: 'Nakamoto Consensus',
-      finality: '10 - 60 минут',
-      tps: '7 - 15',
-      vulnerability: 'None',
-      capitalEfficiency: 'Low',
-      energyCost: 'Чрезвычайно высокая (~120 ТВт·ч/год)',
-      hardwareReqs: 'Специализированные ASIC-майнеры',
-      mathematicalStability: 'Вероятностный консенсус (риск атаки 51% пулов)',
-      description: 'Безопасность достигается за счет сжигания тераватт физической энергии. Майнеры соревнуются в расшифровке хэшей.',
-      drawback: 'Абсолютное доминирование по уровню децентрализации хэшрейта в физическом мире. Невозможно обойти без гигантской энергии.',
-      remedy: 'Symbiosis не конкурирует с PoW Биткоина в качестве резервных денег. Вместо этого мы интегрируем анкоринг состояния Veritas напрямую в транзакции Биткоина (Btc Anchoring), заимствуя его стопроцентную термодинамическую защиту от реорганизации глубже 6 блоков!'
-    },
-    {
-      id: 'pos_eth',
-      name: 'Proof of Stake (PoS) - Ethereum (Lido/EigenLayer)',
-      type: 'BFT-style Gas-bound',
-      finality: '12 - 24 секунды',
-      tps: '15 - 45 (L1)',
-      vulnerability: 'High',
-      capitalEfficiency: 'Medium',
-      energyCost: 'Низкая (выделенные серверы)',
-      hardwareReqs: '32GB RAM, высокоскоростной NVMe, выделенный IP',
-      mathematicalStability: 'Нестабильно при нагрузках (Дилемма верификатора вынуждает экономить CPU и «слепо подписывать» чужие блоки)',
-      description: 'Валидаторы блокируют капитал для права голоса. Подтверждение чужих EVM-переходов экономически невыгодно (лишь тратит CPU).',
-      drawback: 'Колоссальное преимущество в ликвидности (TVL > $45B) и сетевом эффекте. Миллионы кошельков интегрированы.',
-      remedy: 'Symbiosis разворачивает свои легкие смарт-контракты с Пост-Квантовым Falcon реестром прямо поверх Sepolia/Ethereum L2 в виде гибридного роллапа. Мы заимствуем безопасность расчетов Ethereum, но лечим Дилемму верификатора с помощью Red Herring Puzzles: заставляем ноды непрерывно проверять транзакции под риском мгновенного выявления лености!'
-    },
-    {
-      id: 'pos_sol',
-      name: 'Proof of Stake (PoS) - Solana',
-      type: 'Proof of History (PoH)',
-      finality: '400 - 800 миллисекунд',
-      tps: '1 500 - 3 500',
-      vulnerability: 'Medium',
-      capitalEfficiency: 'Medium',
-      energyCost: 'Умеренная (быстрые графические стойки)',
-      hardwareReqs: 'Тяжелый сервер (128GB+ RAM, 16+ Cores, огромный трафик)',
-      mathematicalStability: 'Периодические аварийные остановки сети из-за перегрузки пулов координации',
-      description: 'Сверхзвуковые слоты, жесткий тайминг. Валидаторам приходится подтверждать транзакции вслепую.',
-      drawback: 'Лидирует по пиковым скоростям ввода микротранзакций и дешевому газу на уровне L1.',
-      remedy: 'Высокие требования к серверам Solana приводят к сильной дата-центровой централизации. Наша мобильная Veritas-абстракция позволяет координировать тысячи дешевых легких клиентов на обычных смартфонах и ПК. Используя суб-дискретные ротационные комитеты, мы добиваемся субсекундной финализации (100-300мс) без перегрузки нод и риска централизации.'
-    },
-    {
-      id: 'sym',
-      name: 'Symbiosis Network (Veritas)',
-      type: 'Proof of Whistleblower L2',
-      finality: '100 - 350 миллисекунд',
-      tps: '20 000+ (Rollup)',
-      vulnerability: 'Zero',
-      capitalEfficiency: 'Maximum',
-      energyCost: 'Минимальная (потоковые вычисления)',
-      hardwareReqs: 'Потребительские ПК, мобильные устройства или микро-облако',
-      mathematicalStability: 'Абсолютно стабильно (Равновесие Нэша гарантирует проверку благодаря динамическим приманкам)',
-      description: 'Сеть случайным образом инжектирует заведомо ложные блоки-пустышки (Red Herrings). Одобрение ленивым валидатором ведет к моментальному срезу его стейка.',
-      drawback: 'Начальная фаза развития – меньшая экосистема dApps в экосистеме Symbiosis по сравнению с классическими гигантами.',
-      remedy: 'Полная обратная EVM-совместимость с Sepolia / Arbitrum / Optimism. Разработчики могут поставлять Solidity контракты без перекомпиляции, а наши легкие ноды гарантируют честность без накладных расходов.'
-    }
-  ];
-
-  const activeConsensus = consensusProfiles.find(p => p.id === selectedConsensusId) || consensusProfiles[3];
-
   // Roadmap Stages
   const roadmapSteps = [
     {
@@ -163,19 +80,19 @@ export const SymbiosisRoadmap: React.FC = () => {
     },
     {
       index: 2,
-      period: 'Phase 3: Veritas Mobile Client',
-      status: 'active',
-      title: 'Легкие узлы & Баунти-симулятор',
-      description: 'Запуск программы игрофикации Veritas. Мобильные пользователи запускают легкий контейнер и ловят симулированный саботаж.',
-      techs: ['Falcon Sign SDK', 'Mobile Light Node API', 'Bounty Reward Distribution']
+      period: 'Phase 3: Security Hardening & Audit Remediation',
+      status: 'completed',
+      title: 'Полный аудит и герметизация реестров',
+      description: 'Устранение критических уязвимостей (Reentrancy, SafeERC20, Unbonding queue). Falcon-512 PQ сборка и 100% тест-покрытие.',
+      techs: ['OpenZeppelin Pausable', 'SafeERC20 & ReentrancyGuard', '100% Hardhat Coverage Passed']
     },
     {
       index: 3,
-      period: 'Phase 4: Merito-Decentralization Mainnet',
-      status: 'planned',
-      title: 'Основная сеть & SYM DAO',
-      description: 'Полноценный релиз в основной сети Ethereum L2. Перенос управления правилами ловушек напрямую в казначейство DAO.',
-      techs: ['EVM Mainnet Genesis Bridge', 'SYM Governance DAO', 'MEV-Amoled Staking Pool']
+      period: 'Phase 4: Testnet Live Deployment',
+      status: 'active',
+      title: 'Публичный запуск в тестовой сети',
+      description: 'Официальный деплой смарт-контрактов в публичную тестовую сеть. Запуск верификационных нод и децентрализованного SYM DAO.',
+      techs: ['Deploy contracts to Testnet', 'SYM Governance Timelock Active', 'Mainnet Bridging Preparation']
     }
   ];
 
@@ -206,17 +123,7 @@ export const SymbiosisRoadmap: React.FC = () => {
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" /> Дорожная Карта
           </button>
           
-          <button
-            onClick={() => setActiveSubTab('competitors')}
-            className={`px-3 py-1.5 rounded-lg text-[10.5px] font-bold tracking-wide transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeSubTab === 'competitors'
-                ? 'bg-zinc-900 text-purple-400 border border-zinc-805 font-extrabold'
-                : 'text-zinc-500 hover:text-zinc-355'
-            }`}
-          >
-            <Scale className="w-3.5 h-3.5 text-purple-400" /> Сравнение с лидерами
-          </button>
-          
+
           <button
             onClick={() => setActiveSubTab('tokenomics')}
             className={`px-3 py-1.5 rounded-lg text-[10.5px] font-bold tracking-wide transition-all cursor-pointer flex items-center gap-1.5 ${
@@ -268,7 +175,7 @@ export const SymbiosisRoadmap: React.FC = () => {
                   <div className="text-[9px] font-mono text-zinc-500 uppercase font-black">Текущая Фаза</div>
                   <div className="text-xs font-extrabold text-purple-400 flex items-center gap-1.5 font-mono">
                     <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-                    Phase 3 (Mobile Live-Bounty)
+                    Phase 4 (Testnet Active)
                   </div>
                 </div>
               </div>
@@ -327,118 +234,6 @@ export const SymbiosisRoadmap: React.FC = () => {
                 </div>
               );
             })}
-          </div>
-
-        </div>
-      )}
-
-      {/* VIEWPORT 2: COMPETITOR MATRIX WITH DEFENSIVELY SOLVED RISKS */}
-      {activeSubTab === 'competitors' && (
-        <div className="space-y-4 animate-fadeIn">
-          
-          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800/80">
-            <h3 className="text-xs font-bold text-zinc-100 font-sans uppercase tracking-wider mb-1.5">
-              Анализ Силы И Уязвимостей Symbiosis Network (Где мы уступаем и как исправляем)
-            </h3>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Мы ведем честный и профессиональный аудит проекта. В классических блокчейн-стандартах разработчики умалчивают о слабых звеньях своей структуры. Как крипто-архитекторы, мы открыто сопоставляем Symbiosis с гигантами индустрии, выявляя слабые места ранних стадий, и внедрили системные криптографические исправления (remedies).
-            </p>
-          </div>
-
-          <div className="grid grid-cols-12 gap-5 items-stretch">
-            
-            {/* Left selector menu */}
-            <div className="col-span-12 md:col-span-4 flex flex-col gap-2">
-              {consensusProfiles.map(p => {
-                const isSelected = selectedConsensusId === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => setSelectedConsensusId(p.id)}
-                    className={`p-3.5 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer duration-200 ${
-                      isSelected
-                        ? 'bg-[#181126] border-purple-500 text-purple-300 font-bold shadow-lg'
-                        : 'bg-zinc-950 border-zinc-850 hover:bg-zinc-900/50 text-zinc-400'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-extrabold text-xs">{p.name}</span>
-                      {p.id === 'sym' && <Zap className="w-3.5 h-3.5 text-purple-400 animate-pulse" />}
-                    </div>
-                    <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-500">{p.type}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Right profiling detail card */}
-            <div className="col-span-12 md:col-span-8 flex flex-col justify-between bg-gradient-to-b from-[#0d0d10] to-[#060608] border border-zinc-800/80 rounded-2xl p-5 gap-4">
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
-                  <div className="flex items-center gap-2">
-                    <Scale className="w-4.5 h-4.5 text-purple-400" />
-                    <span className="text-zinc-100 font-mono font-bold text-xs uppercase tracking-wider">
-                      {activeConsensus.name} Техпрофиль
-                    </span>
-                  </div>
-                  
-                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-bold ${
-                    activeConsensus.vulnerability === 'Zero'
-                      ? 'bg-emerald-950/40 text-emerald-400 border-emerald-900'
-                      : activeConsensus.vulnerability === 'High'
-                      ? 'bg-red-950/40 text-red-400 border-red-900'
-                      : 'bg-zinc-900 text-zinc-300 border-zinc-800'
-                  }`}>
-                    Угроза лени: {activeConsensus.vulnerability}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-mono font-semibold">
-                  <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-850">
-                    <span className="text-zinc-500 block text-[8px] uppercase tracking-wider mb-0.5 font-sans">Финализация:</span>
-                    <span className="text-zinc-100">{activeConsensus.finality}</span>
-                  </div>
-                  <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-850">
-                    <span className="text-zinc-500 block text-[8px] uppercase tracking-wider mb-0.5 font-sans">Пропускная:</span>
-                    <span className="text-zinc-100">{activeConsensus.tps}</span>
-                  </div>
-                  <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-850">
-                    <span className="text-zinc-500 block text-[8px] uppercase tracking-wider mb-0.5 font-sans">Капитал:</span>
-                    <span className="text-zinc-105">{activeConsensus.capitalEfficiency}</span>
-                  </div>
-                  <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-850">
-                    <span className="text-zinc-500 block text-[8px] uppercase tracking-wider mb-0.5 font-sans">Оборудование:</span>
-                    <span className="text-zinc-100 text-[10px] truncate block">{activeConsensus.hardwareReqs}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 text-xs font-sans">
-                  <span className="text-zinc-400 font-extrabold uppercase tracking-wide block text-[10px]">Описание сути:</span>
-                  <p className="text-zinc-300 leading-relaxed">{activeConsensus.description}</p>
-                </div>
-
-                {/* Drawback and Remedy Contrast */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-zinc-800">
-                  <div className="bg-[#1c0808]/20 border border-red-950 rounded-xl p-4 space-y-1.5 text-xs">
-                    <span className="text-red-400 font-extrabold uppercase tracking-widest block text-[9px] font-mono flex items-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5" /> В чём проигрываем (Drawback):
-                    </span>
-                    <p className="text-zinc-350 leading-relaxed">{activeConsensus.drawback}</p>
-                  </div>
-
-                  <div className="bg-[#05140b]/20 border border-emerald-950 rounded-xl p-4 space-y-1.5 text-xs">
-                    <span className="text-emerald-400 font-extrabold uppercase tracking-widest block text-[9px] font-mono flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5" /> Тех-Исправление (Remedy):
-                    </span>
-                    <p className="text-zinc-300 leading-relaxed">{activeConsensus.remedy}</p>
-                  </div>
-                </div>
-
-              </div>
-              
-            </div>
-
           </div>
 
         </div>

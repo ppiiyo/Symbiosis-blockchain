@@ -72,6 +72,15 @@ npx hardhat run scripts/deploy.js --network localhost
 
 ---
 
+## 🗺️ Roadmap (Обновленная дорожная карта)
+
+*   **Phase 1: Game Theory Core (Завершено)**: Разработка и проектирование экономических стимулов Nash Consensus. Спецификация RFC v1.0 и уравнений "Red Herring" ловушек.
+*   **Phase 2: EVM & ZK Pipeline (Завершено)**: Интеграция смарт-контрактов на Solidity с ZK-Snark прувером для моментальной валидации улик саботажа.
+*   **Phase 3: Security Hardening & Audit Remediation (Завершено)**: Проведение глубокого аудита и устранение всех уязвимостей (Reentrancy, SafeERC20, Pausable, Unbonding guards). 100% тест-покрытие.
+*   **Phase 4: Testnet Live Deployment (Текущий этап)**: Деплой контрактов в публичную тестовую сеть. Запуск верификационных нод и децентрализованного SYM DAO, подготовка к переходам в основную сеть.
+
+---
+
 ## 📊 Security Profile Verdict
 
 | Assessment Category | Score | Weight | Weighted | Status |
