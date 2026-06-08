@@ -3,6 +3,10 @@ pragma solidity ^0.8.24;
 
 import "./SymbiosisToken.sol";
 
+interface INashConsensusRegistry {
+    function boostReputationWithZk(address validator, uint256 boostAmount) external;
+}
+
 /// @title ZkProverRegistry for ZK-Cops verification mechanism
 /// @notice Manages ZK provers and verifies cryptographic proofs of validation computations.
 contract ZkProverRegistry {
@@ -35,10 +39,10 @@ contract ZkProverRegistry {
         emit ProverStatusUpdated(msg.sender, true);
     }
 
-    function setConsensusRegistry(address _consensusRegistry) external onlyGovernor {
-        require(_consensusRegistry != address(0), "Zero address");
-        consensusRegistry = _consensusRegistry;
-        emit ConsensusRegistryUpdated(_consensusRegistry);
+    function setConsensusRegistry(address consensusRegistryAddress) external onlyGovernor {
+        require(consensusRegistryAddress != address(0), "Zero address");
+        consensusRegistry = consensusRegistryAddress;
+        emit ConsensusRegistryUpdated(consensusRegistryAddress);
     }
 
     function setProverStatus(address prover, bool status) external onlyGovernor {
@@ -58,6 +62,7 @@ contract ZkProverRegistry {
         bytes32 publicInputsHash,
         address validatorAddress
     ) external onlyAuthorizedProver returns (bool) {
+        require(validatorAddress != address(0), "Zero address validator");
         require(proof.length > 0, "Empty proof payload");
         
         bytes32 proofHash = keccak256(abi.encodePacked(computationHash, proof, publicInputsHash));
@@ -81,11 +86,11 @@ contract ZkProverRegistry {
         
         // Boost consensus validator's reputation in connected NashConsensusRegistry
         if (consensusRegistry != address(0)) {
-            // solhint-disable-next-line avoid-low-level-calls
-            (bool success, ) = consensusRegistry.call(
-                abi.encodeWithSignature("boostReputationWithZk(address,uint256)", validatorAddress, 20)
-            );
-            // Ignore low-level failure to maintain robustness
+            try INashConsensusRegistry(consensusRegistry).boostReputationWithZk(validatorAddress, 20) {
+                // Success
+            } catch {
+                // Ignore failure to maintain robustness
+            }
         }
 
         return true;

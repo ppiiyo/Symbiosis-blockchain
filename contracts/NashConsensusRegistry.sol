@@ -263,9 +263,9 @@ contract NashConsensusRegistry is ReentrancyGuard, Pausable {
     }
 
     /// @notice Configure associated ZkProverRegistry address
-    function setZkProverRegistry(address _zkProverRegistry) external onlyGovernor {
-        require(_zkProverRegistry != address(0), "Zero address");
-        zkProverRegistryAddr = _zkProverRegistry;
+    function setZkProverRegistry(address zkProverRegistryAddress) external onlyGovernor {
+        require(zkProverRegistryAddress != address(0), "Zero address");
+        zkProverRegistryAddr = zkProverRegistryAddress;
     }
 
     /// @notice Allows the ZkProverRegistry to boost a validator's reputation after successful ZK computation validation

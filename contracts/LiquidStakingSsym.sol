@@ -61,7 +61,7 @@ contract LiquidStakingSsym is ERC4626, ReentrancyGuard, Pausable {
     /// @dev Custom conversion from assets to shares matching the 1000 dead-shares protection
     function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
         uint256 totalShares = totalSupply();
-        if (totalShares == 0) {
+        if (totalShares < 1) {
             if (assets <= 1000) return 0;
             return assets - 1000;
         }
@@ -71,7 +71,7 @@ contract LiquidStakingSsym is ERC4626, ReentrancyGuard, Pausable {
     /// @dev Custom conversion from shares to assets matching the 1000 dead-shares protection
     function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view override returns (uint256) {
         uint256 totalShares = totalSupply();
-        if (totalShares == 0) {
+        if (totalShares < 1) {
             return shares + 1000;
         }
         return shares.mulDiv(totalAssets(), totalShares, rounding);
@@ -79,7 +79,7 @@ contract LiquidStakingSsym is ERC4626, ReentrancyGuard, Pausable {
 
     /// @dev Override internal deposit hook to ensure Pausable enforcement, initial dead-minting, and event logging
     function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal override whenNotPaused {
-        if (totalSupply() == 0) {
+        if (totalSupply() < 1) {
             require(assets > 1000, "Minimum first stake is 1001 SYM");
             _mint(address(0x000000000000000000000000000000000000dEaD), 1000);
         }
