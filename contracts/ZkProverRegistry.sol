@@ -2,10 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "./SymbiosisToken.sol";
-
-interface INashConsensusRegistry {
-    function boostReputationWithZk(address validator, uint256 boostAmount) external;
-}
+import "./INashConsensusRegistry.sol";
 
 /// @title ZkProverRegistry for ZK-Cops verification mechanism
 /// @notice Manages ZK provers and verifies cryptographic proofs of validation computations.

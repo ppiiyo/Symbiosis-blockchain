@@ -5,11 +5,12 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./SymbiosisToken.sol";
+import "./INashConsensusRegistry.sol";
 
 /// @title Nash Consensus Registry for the Symbiosis Protocol
 /// @notice Manages validator registration, staking, Falcon-512 signatures, and lazy slashing.
 /// @dev Integrates post-quantum Falcon-512 public keys with SafeERC20, ReentrancyGuard, and Pausable.
-contract NashConsensusRegistry is ReentrancyGuard, Pausable {
+contract NashConsensusRegistry is ReentrancyGuard, Pausable, INashConsensusRegistry {
     using SafeERC20 for IERC20;
 
     /// @notice Reference to the SYM utility ERC20 token
