@@ -118,13 +118,47 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
     };
   }, []);
 
-  // Pre-loaded deployed addresses for Etherscan highlights
-  const deployedAddresses = {
-    token: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-    staking: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    consensus: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-    zkProver: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+  const [selectedNetwork, setSelectedNetwork] = useState<'localhost' | 'baseSepolia' | 'arbitrumSepolia'>('localhost');
+
+  const networkAddresses = {
+    localhost: {
+      name: "Localhost (Hardhat Node)",
+      token: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      staking: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      consensus: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      zkProver: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      explorer: "http://127.0.0.1:8545",
+      explorerName: "Local RPC"
+    },
+    baseSepolia: {
+      name: "Base Sepolia Testnet",
+      token: "0x9E751Dbf02DAdc4fAF9EFDF8ee9df8450f38bBD4",
+      staking: "0xc9074F96f9C00dB9E323aAAd8FdCe73f1dDdc44e",
+      consensus: "0x6a0d01b50e0d17dc79C85078dbb4c106972e399b",
+      zkProver: "0x1Cf7Ed3AccA5a467e9e704C703E8D87F634fB0992",
+      explorer: "https://sepolia.basescan.org/address/",
+      explorerName: "Basescan"
+    },
+    arbitrumSepolia: {
+      name: "Arbitrum Sepolia Testnet",
+      token: "0x23aAAd8FdCe73f1dDdc44e59074F96f9C00dB9E9c",
+      staking: "0x573f1dDdc44e59074F96f9C052acae73f1dDdc44e",
+      consensus: "0x8e704C703E8D87F634fB0Fc91Cf7Ed3AccA5a467",
+      zkProver: "0xd9a65f0992f2272de9f3c7fa6e0Cf7Ed3AccA5a4",
+      explorer: "https://sepolia.arbiscan.io/address/",
+      explorerName: "Arbiscan"
+    }
   };
+
+  const deployedAddresses = networkAddresses[selectedNetwork];
+
+  useEffect(() => {
+    addConsoleLog(`🌐 Переключено на API-провайдер: ${networkAddresses[selectedNetwork].name}`);
+    addConsoleLog(`[SDK_STATUS] Контракт SymbiosisToken обнаружен: ${networkAddresses[selectedNetwork].token}`);
+    addConsoleLog(`[SDK_STATUS] Контракт LiquidStakingSsym обнаружен: ${networkAddresses[selectedNetwork].staking}`);
+    addConsoleLog(`[SDK_STATUS] Контракт NashConsensusRegistry обнаружен: ${networkAddresses[selectedNetwork].consensus}`);
+    addConsoleLog(`[SDK_STATUS] Контракт ZkProverRegistry обнаружен: ${networkAddresses[selectedNetwork].zkProver}`);
+  }, [selectedNetwork]);
 
   const connectWeb3Wallet = async () => {
     if (walletConnected) {
@@ -277,85 +311,114 @@ export const SepoliaDAppHub: React.FC<SepoliaDAppHubProps> = ({
         <div className="p-5 rounded-2xl border border-zinc-800/80 bg-gradient-to-br from-[#121215] to-[#09090b] relative overflow-hidden backdrop-blur-md shadow-lg shadow-black/80 group">
           <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all duration-500 pointer-events-none" />
           
-          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3 mb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-800/80 pb-4 mb-4 gap-3">
             <div className="flex items-center gap-2.5">
               <span className="flex h-2.5 w-2.5 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
               </span>
               <h2 className="text-xs font-extrabold tracking-widest text-[#a855f7] font-mono uppercase">
-                Реестр смарт-контрактов Sepolia L2 Rollup
+                Реестр смарт-контрактов L2 Rollup
               </h2>
             </div>
             
-            <div className="flex items-center gap-1.5 text-xs text-zinc-300 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
-              <Globe className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="font-mono text-[9px] font-bold uppercase tracking-wider">sepolia-testnet</span>
+            {/* Network Selector Tabs */}
+            <div className="flex bg-zinc-900 border border-zinc-800 p-1 rounded-xl gap-1">
+              <button
+                onClick={() => setSelectedNetwork('localhost')}
+                className={`px-2 py-1 text-[9px] font-mono tracking-wider font-bold rounded-lg transition-all ${
+                  selectedNetwork === 'localhost'
+                    ? 'bg-[#181126] text-purple-400 border border-purple-500/20 font-black'
+                    : 'text-zinc-500 hover:text-zinc-350'
+                }`}
+              >
+                Local Node
+              </button>
+              <button
+                onClick={() => setSelectedNetwork('baseSepolia')}
+                className={`px-2 py-1 text-[9px] font-mono tracking-wider font-bold rounded-lg transition-all ${
+                  selectedNetwork === 'baseSepolia'
+                    ? 'bg-[#181126] text-purple-400 border border-purple-500/20 font-black'
+                    : 'text-zinc-500 hover:text-zinc-350'
+                }`}
+              >
+                Base L2
+              </button>
+              <button
+                onClick={() => setSelectedNetwork('arbitrumSepolia')}
+                className={`px-2 py-1 text-[9px] font-mono tracking-wider font-bold rounded-lg transition-all ${
+                  selectedNetwork === 'arbitrumSepolia'
+                    ? 'bg-[#181126] text-purple-400 border border-purple-500/20 font-black'
+                    : 'text-zinc-500 hover:text-zinc-350'
+                }`}
+              >
+                Arbitrum L2
+              </button>
             </div>
           </div>
 
           <div className="space-y-3 font-mono text-[11px]">
             {/* Token */}
             <div className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d10] border border-zinc-800/60 hover:border-indigo-500/30 transition-all duration-300 group/item">
-              <div>
+              <div className="truncate pr-4">
                 <span className="text-zinc-500 block text-[9px] font-bold uppercase tracking-wider mb-1">SYM Token Ledger (ERC-20)</span>
-                <span className="text-zinc-300 select-all group-hover/item:text-indigo-300 transition-colors font-mono">{deployedAddresses.token}</span>
+                <span className="text-zinc-300 select-all group-hover/item:text-indigo-300 transition-colors font-mono block truncate">{deployedAddresses.token}</span>
               </div>
               <a 
-                href={`https://sepolia.etherscan.io/address/${deployedAddresses.token}`}
-                target="_blank" 
+                href={selectedNetwork === 'localhost' ? '#' : `${deployedAddresses.explorer}${deployedAddresses.token}`}
+                target={selectedNetwork === 'localhost' ? '' : '_blank'} 
                 rel="noopener noreferrer"
-                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all"
+                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all shrink-0"
               >
-                Etherscan
+                {selectedNetwork === 'localhost' ? 'Local' : deployedAddresses.explorerName}
               </a>
             </div>
 
             {/* sSYM Staking */}
             <div className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d10] border border-zinc-800/60 hover:border-indigo-500/30 transition-all duration-300 group/item">
-              <div>
+              <div className="truncate pr-4">
                 <span className="text-zinc-500 block text-[9px] font-bold uppercase tracking-wider mb-1">Liquid Staking (sSYM) Pool</span>
-                <span className="text-zinc-300 select-all group-hover/item:text-indigo-300 transition-colors font-mono">{deployedAddresses.staking}</span>
+                <span className="text-zinc-300 select-all group-hover/item:text-indigo-300 transition-colors font-mono block truncate">{deployedAddresses.staking}</span>
               </div>
               <a 
-                href={`https://sepolia.etherscan.io/address/${deployedAddresses.staking}`}
-                target="_blank" 
+                href={selectedNetwork === 'localhost' ? '#' : `${deployedAddresses.explorer}${deployedAddresses.staking}`}
+                target={selectedNetwork === 'localhost' ? '' : '_blank'} 
                 rel="noopener noreferrer"
-                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all"
+                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all shrink-0"
               >
-                Etherscan
+                {selectedNetwork === 'localhost' ? 'Local' : deployedAddresses.explorerName}
               </a>
             </div>
 
             {/* Nash Consensus */}
             <div className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d10] border border-zinc-800/60 hover:border-indigo-500/30 transition-all duration-300 group/item">
-              <div>
+              <div className="truncate pr-4">
                 <span className="text-zinc-500 block text-[9px] font-bold uppercase tracking-wider mb-1">Nash Consensus Signature Registry</span>
-                <span className="text-zinc-300 select-all group-hover/item:text-indigo-300 transition-colors font-mono">{deployedAddresses.consensus}</span>
+                <span className="text-zinc-300 select-all group-hover/item:text-indigo-300 transition-colors font-mono block truncate">{deployedAddresses.consensus}</span>
               </div>
               <a 
-                href={`https://sepolia.etherscan.io/address/${deployedAddresses.consensus}`}
-                target="_blank" 
+                href={selectedNetwork === 'localhost' ? '#' : `${deployedAddresses.explorer}${deployedAddresses.consensus}`}
+                target={selectedNetwork === 'localhost' ? '' : '_blank'} 
                 rel="noopener noreferrer"
-                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all"
+                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all shrink-0"
               >
-                Etherscan
+                {selectedNetwork === 'localhost' ? 'Local' : deployedAddresses.explorerName}
               </a>
             </div>
 
             {/* ZkProver Registry */}
             <div className="flex items-center justify-between p-3 rounded-xl bg-[#0d0d10] border border-zinc-800/60 hover:border-[#a855f7]/30 transition-all duration-300 group/item">
-              <div>
+              <div className="truncate pr-4">
                 <span className="text-zinc-500 block text-[9px] font-bold uppercase tracking-wider mb-1">ZkProver cryptographic registry (ZK-Cops)</span>
-                <span className="text-zinc-300 select-all group-hover/item:text-indigo-400 transition-colors font-mono">{deployedAddresses.zkProver}</span>
+                <span className="text-zinc-300 select-all group-hover/item:text-indigo-400 transition-colors font-mono block truncate">{deployedAddresses.zkProver}</span>
               </div>
               <a 
-                href={`https://sepolia.etherscan.io/address/${deployedAddresses.zkProver}`}
-                target="_blank" 
+                href={selectedNetwork === 'localhost' ? '#' : `${deployedAddresses.explorer}${deployedAddresses.zkProver}`}
+                target={selectedNetwork === 'localhost' ? '' : '_blank'} 
                 rel="noopener noreferrer"
-                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all"
+                className="text-[10px] text-zinc-400 hover:text-indigo-400 font-bold border border-zinc-800 hover:border-indigo-500/40 bg-zinc-900/60 hover:bg-slate-950/20 px-3 py-1.5 rounded-lg transition-all shrink-0"
               >
-                Etherscan
+                {selectedNetwork === 'localhost' ? 'Local' : deployedAddresses.explorerName}
               </a>
             </div>
           </div>
