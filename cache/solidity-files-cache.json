@@ -2,14 +2,14 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/app/applet/contracts/INashConsensusRegistry.sol": {
-      "lastModificationDate": 1780911039484,
+      "lastModificationDate": 1780943712458,
       "contentHash": "53ce05e464e117956dd0f771daf7803f",
       "sourceName": "contracts/INashConsensusRegistry.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -26,9 +26,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -41,14 +38,14 @@
       ]
     },
     "/app/applet/contracts/ZkProverRegistry.sol": {
-      "lastModificationDate": 1780911046573,
+      "lastModificationDate": 1780943712434,
       "contentHash": "302998e670683838856c394ddc05d1fb",
       "sourceName": "contracts/ZkProverRegistry.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -65,9 +62,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -83,14 +77,14 @@
       ]
     },
     "/app/applet/contracts/SymbiosisToken.sol": {
-      "lastModificationDate": 1780910665599,
+      "lastModificationDate": 1780943712462,
       "contentHash": "f798959f17e27c6540b775b1bc54ecba",
       "sourceName": "contracts/SymbiosisToken.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -107,9 +101,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -126,14 +117,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/utils/Pausable.sol": {
-      "lastModificationDate": 1780910682251,
+      "lastModificationDate": 1780943728325,
       "contentHash": "24e52f6ef3868e6fca664a423140bee9",
       "sourceName": "@openzeppelin/contracts/utils/Pausable.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -150,9 +141,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -167,14 +155,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
-      "lastModificationDate": 1780910681307,
+      "lastModificationDate": 1780943727520,
       "contentHash": "38910c3dfa5e3778fac8888b1d714084",
       "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -191,9 +179,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -211,14 +196,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol": {
-      "lastModificationDate": 1780910681322,
+      "lastModificationDate": 1780943727555,
       "contentHash": "273d8d24b06f67207dd5f35c3a0c1086",
       "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -235,9 +220,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -253,14 +235,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/utils/Context.sol": {
-      "lastModificationDate": 1780910680982,
+      "lastModificationDate": 1780943727262,
       "contentHash": "67bfbc07588eb8683b3fd8f6f909563e",
       "sourceName": "@openzeppelin/contracts/utils/Context.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -277,9 +259,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -292,14 +271,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/interfaces/draft-IERC6093.sol": {
-      "lastModificationDate": 1780910681032,
+      "lastModificationDate": 1780943727298,
       "contentHash": "267d92fe4de67b1bdb3302c08f387dbf",
       "sourceName": "@openzeppelin/contracts/interfaces/draft-IERC6093.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -316,9 +295,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -333,14 +309,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
-      "lastModificationDate": 1780910681951,
+      "lastModificationDate": 1780943728063,
       "contentHash": "8f19f64d2adadf448840908bbaf431c8",
       "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -357,9 +333,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -372,14 +345,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": {
-      "lastModificationDate": 1780910681971,
+      "lastModificationDate": 1780943728076,
       "contentHash": "794db3115001aa372c79326fcfd44b1f",
       "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -396,9 +369,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -413,14 +383,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol": {
-      "lastModificationDate": 1780910681453,
+      "lastModificationDate": 1780943727667,
       "contentHash": "04618d4c9ee497acd32f4cfb661c6470",
       "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -437,9 +407,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -457,14 +424,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/utils/math/Math.sol": {
-      "lastModificationDate": 1780910682176,
+      "lastModificationDate": 1780943728262,
       "contentHash": "2b2665ae9bdb1af440658741a77fe213",
       "sourceName": "@openzeppelin/contracts/utils/math/Math.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -481,9 +448,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -499,14 +463,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/interfaces/IERC4626.sol": {
-      "lastModificationDate": 1780910682041,
+      "lastModificationDate": 1780943728116,
       "contentHash": "2e6c1c1cadadeaf67203fc712d7d9b00",
       "sourceName": "@openzeppelin/contracts/interfaces/IERC4626.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -523,9 +487,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -541,14 +502,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": {
-      "lastModificationDate": 1780910682307,
+      "lastModificationDate": 1780943728380,
       "contentHash": "effe88dd27f56305c4513f7aa9970ec9",
       "sourceName": "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -565,9 +526,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -584,14 +542,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/utils/Panic.sol": {
-      "lastModificationDate": 1780910682245,
+      "lastModificationDate": 1780943728322,
       "contentHash": "2133dc13536b4a6a98131e431fac59e1",
       "sourceName": "@openzeppelin/contracts/utils/Panic.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -608,9 +566,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -623,14 +578,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/utils/math/SafeCast.sol": {
-      "lastModificationDate": 1780910682291,
+      "lastModificationDate": 1780943728372,
       "contentHash": "2adca1150f58fc6f3d1f0a0f22ee7cca",
       "sourceName": "@openzeppelin/contracts/utils/math/SafeCast.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -647,9 +602,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -662,14 +614,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/interfaces/IERC1363.sol": {
-      "lastModificationDate": 1780910681894,
+      "lastModificationDate": 1780943728009,
       "contentHash": "6b7c5ee7a59c981072a804c99ab0fac9",
       "sourceName": "@openzeppelin/contracts/interfaces/IERC1363.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -686,9 +638,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -704,14 +653,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/utils/Address.sol": {
-      "lastModificationDate": 1780910680889,
+      "lastModificationDate": 1780943727175,
       "contentHash": "553fc9ae17d9c00fd1c301b760781e26",
       "sourceName": "@openzeppelin/contracts/utils/Address.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -728,9 +677,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -745,14 +691,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/interfaces/IERC20.sol": {
-      "lastModificationDate": 1780910681941,
+      "lastModificationDate": 1780943728057,
       "contentHash": "79af12d64eacc7d77b9ee2ac4b4d51ee",
       "sourceName": "@openzeppelin/contracts/interfaces/IERC20.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -769,9 +715,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -784,14 +727,14 @@
       "artifacts": []
     },
     "/app/applet/node_modules/@openzeppelin/contracts/interfaces/IERC165.sol": {
-      "lastModificationDate": 1780910681910,
+      "lastModificationDate": 1780943728023,
       "contentHash": "f808b485ee0cdc6768ee8385ae5f9a2a",
       "sourceName": "@openzeppelin/contracts/interfaces/IERC165.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -808,9 +751,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -823,14 +763,14 @@
       "artifacts": []
     },
     "/app/applet/node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
-      "lastModificationDate": 1780910681918,
+      "lastModificationDate": 1780943728034,
       "contentHash": "bf0119eb2a570f219729ff38b6cd1df8",
       "sourceName": "@openzeppelin/contracts/utils/introspection/IERC165.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -847,9 +787,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -862,14 +799,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/utils/Errors.sol": {
-      "lastModificationDate": 1780910681604,
+      "lastModificationDate": 1780943727784,
       "contentHash": "6b5eac2b85500c3012977849cfd633d8",
       "sourceName": "@openzeppelin/contracts/utils/Errors.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -886,9 +823,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -901,14 +835,14 @@
       ]
     },
     "/app/applet/contracts/NashConsensusRegistry.sol": {
-      "lastModificationDate": 1780911054983,
+      "lastModificationDate": 1780943712434,
       "contentHash": "3600de236822222c2944da797693fefd",
       "sourceName": "contracts/NashConsensusRegistry.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -925,9 +859,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -946,14 +877,14 @@
       ]
     },
     "/app/applet/node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol": {
-      "lastModificationDate": 1780910682264,
+      "lastModificationDate": 1780943728343,
       "contentHash": "190613e556d509d9e9a0ea43dc5d891d",
       "sourceName": "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -970,9 +901,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -985,14 +913,14 @@
       ]
     },
     "/app/applet/contracts/LiquidStakingSsym.sol": {
-      "lastModificationDate": 1780910727716,
+      "lastModificationDate": 1780943712436,
       "contentHash": "0d0caa9bb78cdc6168fe57b29b0814d1",
       "sourceName": "contracts/LiquidStakingSsym.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
           "evmVersion": "paris",
@@ -1009,9 +937,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
