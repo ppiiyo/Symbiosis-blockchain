@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
 import { 
   Vote, 
   Coins, 
@@ -20,7 +21,8 @@ import {
   Play,
   Flame,
   Terminal,
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import { ValidatorNode, SimulationConfig } from '../types';
 
@@ -561,6 +563,112 @@ export const GovernanceDaoHub: React.FC<GovernanceDaoHubProps> = ({
     }, 450);
   };
 
+  // Live on-chain status of governance Proposal #0 (setConsensusRegistry)
+  const [proposal0OnChain, setProposal0OnChain] = useState<{
+    actionType: string;
+    targetAddress: string;
+    eta: number;
+    executed: boolean;
+    yesVotes: number;
+    loaded: boolean;
+  } | null>(null);
+
+  const [daoOnChainLogs, setDaoOnChainLogs] = useState<string[]>([
+    "🧭 Подключите MetaMask, чтобы считывать предложения (Proposal #0) напрямую из смарт-контрактов Sepolia..."
+  ]);
+  const [daoExecuting, setDaoExecuting] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchProposal0 = async () => {
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
+        try {
+          const provider = new ethers.BrowserProvider((window as any).ethereum);
+          // Standard deployed token address from configuration
+          const tokenAddress = "0xaDe5390bE98b6aAb9afa45C1570D8AbF53995811";
+          const tokenContract = new ethers.Contract(tokenAddress, [
+            "function proposals(uint256 proposalId) view returns (string memory actionType, address targetAddress, uint256 eta, bool executed, uint256 yesVotes)"
+          ], provider);
+          
+          const propRes = await tokenContract.proposals(0);
+          setProposal0OnChain({
+            actionType: propRes[0] || propRes.actionType,
+            targetAddress: propRes[1] || propRes.targetAddress,
+            eta: Number(propRes[2] || propRes.eta),
+            executed: propRes[3] || propRes.executed,
+            yesVotes: Number(propRes[4] || propRes.yesVotes),
+            loaded: true
+          });
+        } catch (e: any) {
+          // Silence or simple debug
+        }
+      }
+    };
+    fetchProposal0();
+    const interval = setInterval(fetchProposal0, 6000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const voteProposal0OnChain = async () => {
+    if (typeof window === 'undefined' || !(window as any).ethereum) {
+      setDaoOnChainLogs(prev => ["❌ Ошибка: В вашем браузере не обнаружен MetaMask или Web3-кошелек!", ...prev]);
+      return;
+    }
+    setDaoExecuting(true);
+    setDaoOnChainLogs(prev => ["📡 [META_VOTE] Инициирование транзакции voteProposal(0) в MetaMask...", ...prev]);
+    try {
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const signer = await provider.getSigner();
+      const tokenAddress = "0xaDe5390bE98b6aAb9afa45C1570D8AbF53995811";
+      const tokenContract = new ethers.Contract(tokenAddress, [
+        "function voteProposal(uint256 proposalId) external",
+        "function isGovernor(address user) view returns (bool)"
+      ], signer);
+
+      const userAddr = await signer.getAddress();
+      const isGov = await tokenContract.isGovernor(userAddr);
+      if (!isGov) {
+        setDaoOnChainLogs(prev => [`⚠️ ПРЕДУПРЕЖДЕНИЕ: Ваш адрес ${userAddr.slice(0,6)}... не является зарегистрированным губернатором на контракте. Транзакция может отклониться (revert)!`, ...prev]);
+      }
+
+      const tx = await tokenContract.voteProposal(0);
+      setDaoOnChainLogs(prev => [`⏳ Транзакция отправлена (хэш: ${tx.hash.slice(0,20)}...). Ожидание подтверждения блока...`, ...prev]);
+      await tx.wait();
+      setDaoOnChainLogs(prev => [`🎉 [SUCCESS] Ваш голос ЗА Предложение #0 успешно зафиксирован на блокчейне!`, ...prev]);
+      addLog(`🗳️ DAO ON-CHAIN: Успешный голос за Предложение #0 через MetaMask!`);
+    } catch (err: any) {
+      setDaoOnChainLogs(prev => [`❌ [REVERT] Ошибка подписания или выполнения: ${err.message || err}`, ...prev]);
+    } finally {
+      setDaoExecuting(false);
+    }
+  };
+
+  const executeProposal0OnChain = async () => {
+    if (typeof window === 'undefined' || !(window as any).ethereum) {
+      setDaoOnChainLogs(prev => ["❌ Ошибка: MetaMask не найден!", ...prev]);
+      return;
+    }
+    setDaoExecuting(true);
+    setDaoOnChainLogs(prev => ["📡 [META_EXECUTE] Инициирование транзакции executeProposal(0) в MetaMask...", ...prev]);
+    try {
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const signer = await provider.getSigner();
+      const tokenAddress = "0xaDe5390bE98b6aAb9afa45C1570D8AbF53995811";
+      const tokenContract = new ethers.Contract(tokenAddress, [
+        "function executeProposal(uint256 proposalId) external"
+      ], signer);
+
+      const tx = await tokenContract.executeProposal(0);
+      setDaoOnChainLogs(prev => [`⏳ Транзакция отправлена (хэш: ${tx.hash.slice(0,20)}...). Ожидание финализации изменений...`, ...prev]);
+      await tx.wait();
+      setDaoOnChainLogs(prev => [`🎉 [SUCCESS] Предложение #0 внедрено! Контракт NashConsensusRegistry связан с SYM токеном!`, ...prev]);
+      addLog(`⚙️ DAO ON-CHAIN: Предложение #0 успешно выполнено на блокчейне!`);
+    } catch (err: any) {
+      setDaoOnChainLogs(prev => [`❌ [REVERT] Ошибка выполнения Предложения #0: ${err.message || err}`, ...prev]);
+    } finally {
+      setDaoExecuting(false);
+    }
+  };
+
   // Voting power calculated dynamically from sSYM delegated stake + standard balance weight
   const totalStake = Object.values(userStakedNodes).reduce((sum: number, val: any) => sum + (val || 0), 0) as number;
   const votingPower = Math.round(1000 + totalStake);
@@ -729,6 +837,111 @@ export const GovernanceDaoHub: React.FC<GovernanceDaoHubProps> = ({
           </div>
 
           <div className="grid grid-cols-1 gap-4">
+            {/* LIVE ON-CHAIN CONTRACT PROPOSAL #0 PANEL */}
+            <div className="p-5 rounded-2xl border border-purple-900/40 bg-zinc-950/80 shadow-lg shadow-purple-950/5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-2 w-48 bg-gradient-to-l from-purple-500/10 via-purple-500/5 to-transparent rounded-bl-full" />
+              
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-900 pb-3.5 mb-3.5">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] bg-purple-950 text-purple-400 font-bold border border-purple-900/60 font-mono px-2 py-0.5 rounded uppercase">On-Chain Testnet</span>
+                    <span className="text-[9px] bg-emerald-950 text-emerald-400 font-bold border border-emerald-900/60 font-mono px-2 py-0.5 rounded uppercase">ProposalId: #0</span>
+                  </div>
+                  <h4 className="text-zinc-150 font-extrabold font-sans text-sm mt-1.5 leading-snug">
+                    Предложение #0: Первичная связь NashConsensusRegistry c SymbiosisToken (On-Chain)
+                  </h4>
+                  <p className="text-[10.5px] text-zinc-400 font-sans mt-1 leading-relaxed">
+                    Этот смарт-контрактный вызов является финальным этапом интеграции и связывает развернутый адрес реестра нод с управляющим токеном, открывая возможность начисления APY за ZK-Cops верификацию!
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-end shrink-0">
+                  <span className={`text-[10px] font-mono px-2.5 py-1 rounded-full border lg:self-end ${
+                    proposal0OnChain?.executed 
+                      ? 'border-emerald-900 bg-emerald-950/20 text-emerald-400 font-bold'
+                      : (proposal0OnChain?.yesVotes ?? 0) >= 2 
+                      ? 'border-amber-900 bg-amber-950/10 text-amber-500 font-bold animate-pulse'
+                      : 'border-zinc-800 bg-zinc-900/40 text-zinc-400'
+                  }`}>
+                    {proposal0OnChain?.executed 
+                      ? 'Внедрено / Executed' 
+                      : (proposal0OnChain?.yesVotes ?? 0) >= 2 
+                      ? 'Готово к внедрению (Passed)' 
+                      : 'Активно / Active'
+                    }
+                  </span>
+                  <span className="text-[9px] text-zinc-500 mt-1 font-mono">Quorum: 2 Governor Signatures</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Left Column: Live Read attributes from blockchain storage slots */}
+                <div className="space-y-2.5 bg-black/40 p-3 rounded-lg border border-zinc-900/50 text-xs font-mono">
+                  <h5 className="text-[10px] text-zinc-500 uppercase font-sans font-bold tracking-wider">Storage Slot Read (Live)</h5>
+                  
+                  <div className="flex justify-between items-center text-[11px] py-1 border-b border-zinc-900/30">
+                    <span className="text-zinc-500">Action Type:</span>
+                    <span className="text-purple-300 font-bold">{proposal0OnChain?.actionType || 'setConsensusRegistry'}</span>
+                  </div>
+                  <div className="flex justify-between items-start text-[11px] py-1 border-b border-zinc-900/30 gap-2">
+                    <span className="text-zinc-500 shrink-0">Target Registry:</span>
+                    <span className="text-zinc-350 break-all select-all text-[10px]">{proposal0OnChain?.targetAddress || '0x3B51dddcd847531...'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] py-1 border-b border-zinc-900/30">
+                    <span className="text-zinc-500">Unbonding Timelock:</span>
+                    <span className="text-zinc-350">{proposal0OnChain?.eta !== 0 && proposal0OnChain?.eta ? new Date((proposal0OnChain?.eta ?? 0) * 1000).toLocaleString() : 'Safe / Timelock Met'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] pt-1">
+                    <span className="text-zinc-500">Yes Signatures:</span>
+                    <span className="text-emerald-400 font-bold">{proposal0OnChain?.yesVotes ?? 0} / 2 APPROVED</span>
+                  </div>
+
+                  <div className="w-full bg-zinc-900 h-1 rounded-full overflow-hidden mt-1.5 flex">
+                    <div 
+                      className="h-full bg-emerald-500 transition-all duration-300" 
+                      style={{ width: `${Math.min(100, ((proposal0OnChain?.yesVotes ?? 0) / 2) * 100)}%` }} 
+                    />
+                  </div>
+                </div>
+
+                {/* Right Column: MetaMask live interactive interface */}
+                <div className="flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-zinc-500 block text-[9.5px] uppercase font-mono font-bold">Управление из кошелька (MetaMask):</span>
+                    
+                    {/* Console logs box specifically for Proposal #0 transaction operations */}
+                    <div className="bg-black text-[9.5px] p-2.5 rounded border border-zinc-900 text-zinc-400 font-mono h-20 overflow-y-auto custom-scrollbar flex flex-col gap-1 leading-snug">
+                      {daoOnChainLogs.map((log, lIdx) => (
+                        <div key={lIdx} className={log.startsWith('❌') ? 'text-pink-400' : log.startsWith('🎉') ? 'text-emerald-400' : log.includes('⚠️') ? 'text-amber-400' : 'text-zinc-400'}>
+                          {log}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    <button
+                      onClick={voteProposal0OnChain}
+                      disabled={daoExecuting || proposal0OnChain?.executed}
+                      className="bg-purple-950/30 hover:bg-purple-900/30 border border-purple-800 disabled:bg-zinc-950 disabled:border-zinc-900 text-purple-400 font-bold text-xs py-2 rounded transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:text-zinc-650"
+                    >
+                      {daoExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Vote className="w-3.5 h-3.5" />} 
+                      Подписать ЗА (Vote)
+                    </button>
+
+                    <button
+                      onClick={executeProposal0OnChain}
+                      disabled={daoExecuting || proposal0OnChain?.executed || (proposal0OnChain && proposal0OnChain.yesVotes < 2)}
+                      className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-900 text-white font-bold text-xs py-2 rounded transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {daoExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />} 
+                      Выполнить (Execute)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {proposals.map(proposal => {
               const totalVotes = proposal.votesFor + proposal.votesAgainst;
               const forPercentage = totalVotes > 0 ? Math.round((proposal.votesFor / totalVotes) * 100) : 0;
