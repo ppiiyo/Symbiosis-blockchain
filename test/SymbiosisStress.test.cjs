@@ -281,7 +281,7 @@ describe("Symbiosis Protocol - High-Load & Stress Testing Suite", function () {
 
       // Make a dummy call to recycleGas pretending to be consensusRegistry
       const preRefundBal = await symToken.balanceOf(signers[0].address);
-      await symToken.connect(consensusSigner).recycleGas(signers[0].address, gasUsed);
+      await symToken.connect(consensusSigner).recycleGas(signers[0].address, gasUsed, { gasPrice: 1000000000 });
       const postRefundBal = await symToken.balanceOf(signers[0].address);
 
       // GasBackPercentage = 25% by default
